@@ -108,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('auth_token', data.token);
       queryClient.setQueryData(["/api/auth/me"], data.user);
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      
       toast({
         title: "Welcome back!",
         description: `Logged in as ${data.user.username}`,
