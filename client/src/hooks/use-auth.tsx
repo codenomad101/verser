@@ -61,12 +61,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<User | null>({
     queryKey: ["/api/auth/me"],
     queryFn: async () => {
-      if (!token) return null;
+      const currentToken = localStorage.getItem('auth_token');
+      if (!currentToken) return null;
       
       try {
         const response = await fetch('/api/auth/me', {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': `Bearer ${currentToken}`,
           },
         });
         
@@ -84,8 +85,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       }
     },
-    retry: 1,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: false,
+    refetchOnWindowFocus: true,
+    refetchInterval: false,
   });
 
   const loginMutation = useMutation({
