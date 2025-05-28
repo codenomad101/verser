@@ -6,9 +6,14 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
+  password: text("password").notNull(),
   avatar: text("avatar"),
   status: text("status").notNull().default("offline"), // online, offline, away
   bio: text("bio"),
+  about: text("about"),
+  lastSeen: timestamp("last_seen").defaultNow(),
+  showLastSeen: boolean("show_last_seen").notNull().default(true),
+  showOnlineStatus: boolean("show_online_status").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -60,8 +65,27 @@ export const posts = pgTable("posts", {
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   email: true,
+  password: true,
   avatar: true,
   bio: true,
+  about: true,
+});
+
+export const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+});
+
+export const registerSchema = insertUserSchema.extend({
+  password: z.string().min(6),
+});
+
+export const updateUserSettingsSchema = createInsertSchema(users).pick({
+  showLastSeen: true,
+  showOnlineStatus: true,
+  bio: true,
+  about: true,
+  avatar: true,
 });
 
 export const insertConversationSchema = createInsertSchema(conversations).pick({

@@ -2,7 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { localStorage as storage } from "./local-storage";
-import { insertMessageSchema, insertPostSchema, insertCommunitySchema } from "@shared/schema";
+import { insertMessageSchema, insertPostSchema, insertCommunitySchema, loginSchema, registerSchema, updateUserSettingsSchema } from "@shared/schema";
+import { generateToken, hashPassword, comparePassword, authenticateToken, optionalAuth, type AuthenticatedRequest } from "./auth";
 
 interface WebSocketClient extends WebSocket {
   userId?: number;
@@ -108,6 +109,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API Routes
+
+  // Authentication
+  app.post('/api/auth/register', async (req, res) => {
+    try {
+      const validatedData = registerSchema.parse(req.body);
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(validatedData.email);
+      if (existingUser) {
+        return res.status(400).json({ message: 'User already exists with this email' });
+      }
+
+      const existingUsername = await storage.getUserByUsername(validatedData.username);
+      if (existingUsername) {
+        return res.status(400).json({ message: 'Username already taken' });
+      }
+
+      // Hash password and create user
+      const hashedPassword = await hashPassword(validatedData.password);
+      const user = await storage.createUser({
+        ...validatedData,
+        password: hashedPassword
+      });
+
+      // Generate token
+      const token = generateToken(user.id, user.username, user.email);
+      
+      // Remove password from response
+      const { password, ...userWithoutPassword } = user;
+      
+      res.status(201).json({
+        user: userWithoutPassword,
+        token
+      });
+    } catch (error) {
+      res.status(400).json({ message: 'Invalid registration data' });
+    }
+  });
+
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const validatedData = loginSchema.parse(req.body);
+      
+      // Find user by email
+      const user = await storage.getUserByEmail(validatedData.email);
+      if (!user) {
+        return res.status(401).json({ message: 'Invalid email or password' });
+      }
+
+      // Check password
+      const isPasswordValid = await comparePassword(validatedData.password, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ message: 'Invalid email or password' });
+      }
+
+      // Update user status and last seen
+      await storage.updateUserStatus(user.id, 'online');
+      await storage.updateUserSettings(user.id, { lastSeen: new Date() });
+
+      // Generate token
+      const token = generateToken(user.id, user.username, user.email);
+      
+      // Remove password from response
+      const { password, ...userWithoutPassword } = user;
+      
+      res.json({
+        user: userWithoutPassword,
+        token
+      });
+    } catch (error) {
+      res.status(400).json({ message: 'Invalid login data' });
+    }
+  });
+
+  app.post('/api/auth/logout', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (req.user) {
+        await storage.updateUserStatus(req.user.id, 'offline');
+        await storage.updateUserSettings(req.user.id, { lastSeen: new Date() });
+      }
+      res.json({ message: 'Logged out successfully' });
+    } catch (error) {
+      res.status(500).json({ message: 'Logout failed' });
+    }
+  });
+
+  app.get('/api/auth/me', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+      
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to get user data' });
+    }
+  });
 
   // Users
   app.get('/api/users', async (req, res) => {

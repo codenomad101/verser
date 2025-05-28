@@ -7,7 +7,9 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserStatus(id: number, status: string): Promise<User | undefined>;
+  updateUserSettings(id: number, settings: Partial<User>): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
+  getUserPosts(userId: number): Promise<Post[]>;
 
   // Conversations
   getConversation(id: number): Promise<Conversation | undefined>;
