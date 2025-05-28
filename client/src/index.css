@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --background: 210 11% 98%; /* #F9FAFB */
+  --foreground: 225 15% 20%; /* #1F2937 */
+  --muted: 210 14% 96%; /* #F3F4F6 */
+  --muted-foreground: 215 16% 47%; /* #6B7280 */
+  --popover: 0 0% 100%; /* #FFFFFF */
+  --popover-foreground: 225 15% 20%; /* #1F2937 */
+  --card: 0 0% 100%; /* #FFFFFF */
+  --card-foreground: 225 15% 20%; /* #1F2937 */
+  --border: 215 20% 85%; /* #D1D5DB */
+  --input: 215 20% 85%; /* #D1D5DB */
+  --primary: 231 48% 48%; /* #6366F1 */
+  --primary-foreground: 0 0% 100%; /* #FFFFFF */
+  --secondary: 210 14% 96%; /* #F3F4F6 */
+  --secondary-foreground: 225 15% 20%; /* #1F2937 */
+  --accent: 210 14% 96%; /* #F3F4F6 */
+  --accent-foreground: 225 15% 20%; /* #1F2937 */
+  --destructive: 0 84% 60%; /* #EF4444 */
+  --destructive-foreground: 0 0% 100%; /* #FFFFFF */
+  --ring: 231 48% 48%; /* #6366F1 */
+  --radius: 0.5rem;
+
+  /* Custom colors for sections */
+  --purple-primary: 262 52% 46%; /* #8B5CF6 */
+  --blue-primary: 217 91% 60%; /* #3B82F6 */
+  --green-primary: 158 64% 52%; /* #10B981 */
+}
+
+.dark {
+  --background: 225 15% 11%; /* #1F2937 */
+  --foreground: 210 11% 98%; /* #F9FAFB */
+  --muted: 225 15% 15%; /* #374151 */
+  --muted-foreground: 215 16% 65%; /* #9CA3AF */
+  --popover: 225 15% 11%; /* #1F2937 */
+  --popover-foreground: 210 11% 98%; /* #F9FAFB */
+  --card: 225 15% 11%; /* #1F2937 */
+  --card-foreground: 210 11% 98%; /* #F9FAFB */
+  --border: 225 15% 24%; /* #4B5563 */
+  --input: 225 15% 24%; /* #4B5563 */
+  --primary: 231 48% 48%; /* #6366F1 */
+  --primary-foreground: 0 0% 100%; /* #FFFFFF */
+  --secondary: 225 15% 15%; /* #374151 */
+  --secondary-foreground: 210 11% 98%; /* #F9FAFB */
+  --accent: 225 15% 15%; /* #374151 */
+  --accent-foreground: 210 11% 98%; /* #F9FAFB */
+  --destructive: 0 84% 60%; /* #EF4444 */
+  --destructive-foreground: 0 0% 100%; /* #FFFFFF */
+  --ring: 231 48% 48%; /* #6366F1 */
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer utilities {
+  .gradient-bg {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--purple-primary)) 100%);
+  }
+  
+  .chat-bubble {
+    max-width: 70%;
+    word-wrap: break-word;
+  }
+  
+  .online-indicator::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background-color: hsl(var(--green-primary));
+    border-radius: 50%;
+    border: 2px solid white;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+  }
+  
+  .notification-badge {
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+  
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  }
+  
+  .loading-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+  }
+  
+  @keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+}
