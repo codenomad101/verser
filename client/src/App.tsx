@@ -32,7 +32,14 @@ function ProtectedRoute({ component: Component }: { component: () => JSX.Element
   }
 
   if (!user) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <p className="text-gray-600">Redirecting...</p>
+        </div>
+      </div>
+    );
   }
 
   return <Component />;
@@ -43,10 +50,14 @@ function Router() {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (user && window.location.pathname === "/auth") {
-      setLocation("/");
+    if (!isLoading) {
+      if (user && window.location.pathname === "/auth") {
+        setLocation("/");
+      } else if (!user && window.location.pathname !== "/auth") {
+        setLocation("/auth");
+      }
     }
-  }, [user, setLocation]);
+  }, [user, isLoading, setLocation]);
 
   if (isLoading) {
     return (
@@ -62,7 +73,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/auth" component={AuthPage} />
-      <Route path="/" component={() => <ProtectedRoute component={Home} />} />
+      <Route path="/" component={() => user ? <Home /> : <AuthPage />} />
       <Route component={NotFound} />
     </Switch>
   );
