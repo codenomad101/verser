@@ -229,9 +229,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
-      res.json(user);
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
     } catch (error) {
       res.status(500).json({ message: 'Failed to fetch user' });
+    }
+  });
+
+  app.get('/api/users/:id/posts', async (req, res) => {
+    try {
+      const posts = await storage.getUserPosts(parseInt(req.params.id));
+      const postsWithUsers = await Promise.all(
+        posts.map(async (post) => {
+          const user = await storage.getUser(post.userId);
+          const { password, ...userWithoutPassword } = user || {};
+          return { ...post, user: userWithoutPassword };
+        })
+      );
+      res.json(postsWithUsers);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch user posts' });
+    }
+  });
+
+  app.patch('/api/users/:id/settings', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Check if user is updating their own settings
+      if (!req.user || req.user.id !== userId) {
+        return res.status(403).json({ message: 'Can only update your own settings' });
+      }
+
+      const validatedData = updateUserSettingsSchema.parse(req.body);
+      const updatedUser = await storage.updateUserSettings(userId, validatedData);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      res.status(400).json({ message: 'Invalid settings data' });
     }
   });
 
