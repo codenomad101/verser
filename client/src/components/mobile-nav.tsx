@@ -2,8 +2,8 @@ import { MessageSquare, Users, Compass, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MobileNavProps {
-  activeSection: "chat" | "communities" | "discovery";
-  onSectionChange: (section: "chat" | "communities" | "discovery") => void;
+  activeSection: "chat" | "communities" | "discovery" | "profile";
+  onSectionChange: (section: "chat" | "communities" | "discovery" | "profile") => void;
 }
 
 export default function MobileNav({ activeSection, onSectionChange }: MobileNavProps) {
