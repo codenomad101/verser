@@ -5,7 +5,7 @@ import CommunitiesSection from "@/components/communities-section";
 import EnhancedDiscovery from "@/components/enhanced-discovery";
 import ProfileSection from "@/components/profile-section";
 import NewsSidebar from "@/components/news-sidebar";
-import HorizontalNav from "@/components/horizontal-nav";
+import LeftNavigation from "@/components/left-navigation";
 import MobileNav from "@/components/mobile-nav";
 import { useWebSocket } from "@/lib/websocket";
 
@@ -14,16 +14,6 @@ type Section = "chat" | "communities" | "discovery" | "profile";
 export default function Home() {
   const { user } = useAuth();
   const [activeSection, setActiveSection] = useState<Section>("discovery");
-  const [showSidebar, setShowSidebar] = useState(true);
-
-  // Auto-hide sidebar after 4 seconds of no interaction
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSidebar(false);
-    }, 4000);
-
-    return () => clearTimeout(timer);
-  }, [showSidebar]);
 
   // Initialize WebSocket connection
   const { sendMessage, lastMessage, connectionStatus } = useWebSocket();
@@ -76,20 +66,13 @@ export default function Home() {
 
   return (
     <div className="h-screen bg-gray-50 font-inter">
-      {/* Horizontal Navigation */}
-      <HorizontalNav 
-        activeSection={activeSection} 
-        onSectionChange={handleSectionChange}
-      />
-
       <div className="flex h-full">
-        {/* Auto-hide Left Sidebar */}
-        <div 
-          className={`hidden lg:flex transition-all duration-300 ${
-            showSidebar ? 'translate-x-0' : '-translate-x-full'
-          }`}
-          onMouseEnter={() => setShowSidebar(true)}
-        >
+        {/* Left Sidebar - Navigation above News */}
+        <div className="hidden lg:flex flex-col">
+          <LeftNavigation 
+            activeSection={activeSection} 
+            onSectionChange={handleSectionChange}
+          />
           <NewsSidebar 
             activeSection={activeSection} 
             onSectionChange={handleSectionChange}
