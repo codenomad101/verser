@@ -116,10 +116,13 @@ export const registerSchema = insertUserSchema.extend({
 });
 
 export const updateUserSettingsSchema = createInsertSchema(users).pick({
-  showLastSeen: true,
-  showOnlineStatus: true,
+  username: true,
   bio: true,
   about: true,
+  location: true,
+  website: true,
+  showLastSeen: true,
+  showOnlineStatus: true,
   avatar: true,
 });
 
