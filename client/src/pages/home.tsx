@@ -4,18 +4,17 @@ import EnhancedChatSection from "@/components/enhanced-chat-section";
 import CommunitiesSection from "@/components/communities-section";
 import EnhancedDiscovery from "@/components/enhanced-discovery";
 import ProfileSection from "@/components/profile-section";
-import Sidebar from "@/components/sidebar";
-import MobileNav from "@/components/mobile-nav";
 import NewsSidebar from "@/components/news-sidebar";
+import TopNavigation from "@/components/top-navigation";
+import MobileNav from "@/components/mobile-nav";
 import { useWebSocket } from "@/lib/websocket";
-import { MessageSquare, Bell, Search } from "lucide-react";
 
 type Section = "chat" | "communities" | "discovery" | "profile";
 
 export default function Home() {
   const { user } = useAuth();
-  const [activeSection, setActiveSection] = useState<Section>("chat");
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [activeSection, setActiveSection] = useState<Section>("discovery");
+
 
   // Initialize WebSocket connection
   const { sendMessage, lastMessage, connectionStatus } = useWebSocket();
@@ -62,52 +61,29 @@ export default function Home() {
     }
   };
 
+  const handleSectionChange = (section: string) => {
+    setActiveSection(section as Section);
+  };
+
   return (
     <div className="h-screen bg-gray-50 font-inter">
-      {/* Mobile Header */}
-      <header className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-            <MessageSquare className="text-white h-4 w-4" />
-          </div>
-          <h1 className="text-lg font-semibold text-gray-900">
-            <span className="text-blue-600">Verser</span>
-          </h1>
-        </div>
-        <div className="flex items-center space-x-3">
-          <button className="relative p-2">
-            <Bell className="text-gray-600 h-5 w-5" />
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-              3
-            </span>
-          </button>
-          <button className="p-2">
-            <Search className="text-gray-600 h-5 w-5" />
-          </button>
-        </div>
-      </header>
+      {/* Top Navigation */}
+      <TopNavigation 
+        activeSection={activeSection} 
+        onSectionChange={handleSectionChange}
+      />
 
-      <div className="flex h-screen lg:h-auto lg:min-h-screen">
+      <div className="flex h-full">
         {/* News Sidebar */}
         <div className="hidden lg:flex">
           <NewsSidebar 
             activeSection={activeSection} 
-            onSectionChange={setActiveSection}
+            onSectionChange={handleSectionChange}
           />
         </div>
 
-        {/* Desktop Sidebar */}
-        <div className="hidden lg:flex">
-          <Sidebar 
-            activeSection={activeSection} 
-            onSectionChange={setActiveSection}
-            isCollapsed={isSidebarCollapsed}
-            onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          />
-        </div>
-
-        {/* Main Content */}
-        <main className="flex-1 flex flex-col min-h-0">
+        {/* Main Content - Single Active Section */}
+        <main className="flex-1 flex flex-col">
           {renderActiveSection()}
         </main>
       </div>
@@ -116,7 +92,7 @@ export default function Home() {
       <div className="lg:hidden">
         <MobileNav 
           activeSection={activeSection}
-          onSectionChange={setActiveSection}
+          onSectionChange={handleSectionChange}
         />
       </div>
     </div>
