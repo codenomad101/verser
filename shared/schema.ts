@@ -14,6 +14,11 @@ export const users = pgTable("users", {
   lastSeen: timestamp("last_seen").defaultNow(),
   showLastSeen: boolean("show_last_seen").notNull().default(true),
   showOnlineStatus: boolean("show_online_status").notNull().default(true),
+  isVerified: boolean("is_verified").notNull().default(false),
+  followersCount: integer("followers_count").notNull().default(0),
+  followingCount: integer("following_count").notNull().default(0),
+  location: text("location"),
+  website: text("website"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -58,7 +63,37 @@ export const posts = pgTable("posts", {
   likes: integer("likes").notNull().default(0),
   comments: integer("comments").notNull().default(0),
   shares: integer("shares").notNull().default(0),
+  reposts: integer("reposts").notNull().default(0),
+  originalPostId: integer("original_post_id"), // For reposts
+  isRepost: boolean("is_repost").notNull().default(false),
   isTrending: boolean("is_trending").notNull().default(false),
+  sentiment: text("sentiment").default("neutral"), // positive, negative, neutral
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// New table for trending topics (Weibo-inspired)
+export const trendingTopics = pgTable("trending_topics", {
+  id: serial("id").primaryKey(),
+  topic: text("topic").notNull().unique(),
+  postCount: integer("post_count").notNull().default(0),
+  isHot: boolean("is_hot").notNull().default(false),
+  category: text("category").default("general"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// User follows table
+export const follows = pgTable("follows", {
+  id: serial("id").primaryKey(),
+  followerId: integer("follower_id").notNull(),
+  followingId: integer("following_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Post likes table
+export const postLikes = pgTable("post_likes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  postId: integer("post_id").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

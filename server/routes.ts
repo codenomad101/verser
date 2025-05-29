@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
-import { localStorage as storage } from "./local-storage";
+import { storage } from "./storage";
 import { insertMessageSchema, insertPostSchema, insertCommunitySchema, loginSchema, registerSchema, updateUserSettingsSchema } from "@shared/schema";
 import { generateToken, hashPassword, comparePassword, authenticateToken, optionalAuth, type AuthenticatedRequest } from "./auth";
 
