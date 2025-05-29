@@ -113,7 +113,7 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
-          <div className="relative">
+              <div className="relative">
             <Input
               type="text"
               placeholder="Search communities..."
@@ -152,8 +152,8 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
         </ScrollArea>
       </div>
 
-      {/* Community Feed */}
-      <div className="hidden lg:flex lg:flex-1 lg:flex-col">
+        {/* Community Feed */}
+        <div className="hidden lg:flex lg:flex-1 lg:flex-col">
         {activeCommunityData && (
           <>
             <div className="p-4 border-b border-gray-100 bg-white">
@@ -287,6 +287,8 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
           </>
         )}
       </div>
-    </section>
+        </section>
+      </div>
+    </div>
   );
 }
