@@ -39,8 +39,10 @@ export default function EnhancedDiscovery({ currentUser }: DiscoverySectionProps
     ...post,
     contentType: post.imageUrl ? (post.imageUrl.includes('video') ? 'video' : 'image') : 'text',
     duration: post.imageUrl?.includes('video') ? `${Math.floor(Math.random() * 10) + 1}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}` : null,
-    views: Math.floor(Math.random() * 50000) + 1000,
+    views: post.views || Math.floor(Math.random() * 50000) + 1000,
     isShort: Math.random() > 0.7,
+    likes: post.likes || Math.floor(Math.random() * 1000) + 50,
+    comments: post.comments || Math.floor(Math.random() * 100) + 5,
   }));
 
   const getSortedContent = (content: any[]) => {

@@ -6,6 +6,7 @@ import EnhancedDiscovery from "@/components/enhanced-discovery";
 import ProfileSection from "@/components/profile-section";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
+import NewsSidebar from "@/components/news-sidebar";
 import { useWebSocket } from "@/lib/websocket";
 import { MessageSquare, Bell, Search } from "lucide-react";
 
@@ -87,6 +88,14 @@ export default function Home() {
       </header>
 
       <div className="flex h-screen lg:h-auto lg:min-h-screen">
+        {/* News Sidebar */}
+        <div className="hidden lg:flex">
+          <NewsSidebar 
+            activeSection={activeSection} 
+            onSectionChange={setActiveSection}
+          />
+        </div>
+
         {/* Desktop Sidebar */}
         <div className="hidden lg:flex">
           <Sidebar 
