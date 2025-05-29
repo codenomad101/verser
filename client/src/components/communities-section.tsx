@@ -84,16 +84,35 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
   };
 
   return (
-    <section className="flex-1 flex bg-white">
-      {/* Communities List */}
-      <div className="w-full lg:w-80 border-r border-gray-200 flex flex-col">
-        <div className="p-4 border-b border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Communities</h2>
-            <Button size="sm" variant="ghost" className="p-2 text-blue-600 hover:bg-blue-50">
-              <Plus className="h-4 w-4" />
-            </Button>
+    <div className="h-full flex flex-col">
+      {/* Compact Profile Header */}
+      <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 bg-white/20 rounded-full flex items-center justify-center">
+            <span className="text-sm font-bold">AJ</span>
           </div>
+          <div>
+            <h3 className="font-semibold text-sm">alex_johnson</h3>
+            <p className="text-xs text-green-100">Communities</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+          <span className="text-xs">Active</span>
+        </div>
+      </div>
+
+      <div className="flex-1 bg-gradient-to-br from-white via-green-50 to-blue-50">
+        <section className="flex-1 flex h-full">
+          {/* Communities List */}
+          <div className="w-full lg:w-80 border-r border-green-200 flex flex-col bg-white/80 backdrop-blur-sm">
+            <div className="p-4 border-b border-green-200">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold gradient-text">Communities</h2>
+                <Button size="sm" className="modern-button text-white border-0">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
           <div className="relative">
             <Input
               type="text"

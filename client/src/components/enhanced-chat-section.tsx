@@ -101,16 +101,36 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
   const selectedConv = conversations.find((c: any) => c.id === selectedConversation);
 
   return (
-    <div className="h-full flex bg-white">
-      {/* Conversations List */}
-      <div className="w-80 border-r flex flex-col">
-        <div className="p-4 border-b">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">Messages</h2>
-            <Button size="sm" variant="outline">
-              New Chat
-            </Button>
+    <div className="h-full flex flex-col">
+      {/* Compact Profile Header */}
+      <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white p-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-8 w-8 border-2 border-white/30">
+            <AvatarFallback className="bg-white/20 text-white text-sm font-semibold">
+              {currentUser.username.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <h3 className="font-semibold text-sm">{currentUser.username}</h3>
+            <p className="text-xs text-blue-100">Chat Messages</p>
           </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+          <span className="text-xs">Online</span>
+        </div>
+      </div>
+
+      <div className="h-full flex bg-gradient-to-br from-white via-blue-50 to-purple-50">
+        {/* Conversations List */}
+        <div className="w-80 border-r border-blue-200 flex flex-col bg-white/80 backdrop-blur-sm">
+          <div className="p-4 border-b border-blue-200">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold gradient-text">Messages</h2>
+              <Button size="sm" className="modern-button text-white border-0">
+                New Chat
+              </Button>
+            </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
@@ -300,6 +320,7 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

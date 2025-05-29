@@ -239,9 +239,27 @@ export default function EnhancedDiscovery({ currentUser }: DiscoverySectionProps
   const content = getFilteredContent();
 
   return (
-    <div className="h-full flex flex-col bg-white">
-      <div className="p-6 border-b space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">Discover</h1>
+    <div className="h-full flex flex-col">
+      {/* Compact Profile Header */}
+      <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 bg-white/20 rounded-full flex items-center justify-center">
+            <span className="text-sm font-bold">AJ</span>
+          </div>
+          <div>
+            <h3 className="font-semibold text-sm">alex_johnson</h3>
+            <p className="text-xs text-purple-100">Discovery Feed</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+          <span className="text-xs">Discovering</span>
+        </div>
+      </div>
+
+      <div className="flex-1 bg-gradient-to-br from-white via-purple-50 to-pink-50">
+        <div className="p-6 border-b border-purple-200 space-y-4 bg-white/80 backdrop-blur-sm">
+          <h1 className="text-xl font-bold gradient-text">Discover</h1>
         
         {/* Search */}
         <div className="relative">
@@ -346,6 +364,7 @@ export default function EnhancedDiscovery({ currentUser }: DiscoverySectionProps
             )}
           </div>
         )}
+        </div>
       </div>
     </div>
   );
