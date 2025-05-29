@@ -65,13 +65,13 @@ export class MemStorage implements IStorage {
   }
 
   private initializeData() {
-    // Create sample users
+    // Create sample users with passwords
     const sampleUsers: InsertUser[] = [
-      { username: "alex_johnson", email: "alex@example.com", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face", bio: "Product Designer" },
-      { username: "sarah_wilson", email: "sarah@example.com", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face", bio: "UX Designer" },
-      { username: "mike_johnson", email: "mike@example.com", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face", bio: "Frontend Developer" },
-      { username: "emma_rodriguez", email: "emma@example.com", avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=100&h=100&fit=crop&crop=face", bio: "Full Stack Developer" },
-      { username: "david_chen", email: "david@example.com", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face", bio: "Backend Engineer" },
+      { username: "alex_johnson", email: "alex@example.com", password: "password123", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face", bio: "Product Designer" },
+      { username: "sarah_wilson", email: "sarah@example.com", password: "password123", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face", bio: "UX Designer" },
+      { username: "mike_johnson", email: "mike@example.com", password: "password123", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face", bio: "Frontend Developer" },
+      { username: "emma_rodriguez", email: "emma@example.com", password: "password123", avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=100&h=100&fit=crop&crop=face", bio: "Full Stack Developer" },
+      { username: "david_chen", email: "david@example.com", password: "password123", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face", bio: "Backend Engineer" },
     ];
 
     sampleUsers.forEach(user => {
@@ -80,6 +80,13 @@ export class MemStorage implements IStorage {
         ...user, 
         id, 
         status: Math.random() > 0.5 ? "online" : "offline",
+        lastSeen: new Date(),
+        showLastSeen: true,
+        showOnlineStatus: true,
+        isVerified: false,
+        followersCount: Math.floor(Math.random() * 1000),
+        followingCount: Math.floor(Math.random() * 500),
+        postCount: Math.floor(Math.random() * 100),
         createdAt: new Date() 
       };
       this.users.set(id, newUser);
