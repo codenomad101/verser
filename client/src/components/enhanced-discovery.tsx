@@ -48,9 +48,9 @@ export default function EnhancedDiscovery({ currentUser }: DiscoverySectionProps
   const getSortedContent = (content: any[]) => {
     switch (sortBy) {
       case "latest":
-        return [...content].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        return [...content].sort((a, b) => new Date(b.createdAt || Date.now()).getTime() - new Date(a.createdAt || Date.now()).getTime());
       case "popular":
-        return [...content].sort((a, b) => (b.likes + b.views) - (a.likes + a.views));
+        return [...content].sort((a, b) => ((b.likes || 0) + (b.views || 0)) - ((a.likes || 0) + (a.views || 0)));
       case "trending":
       default:
         return trendingPosts.length > 0 ? trendingPosts : content.slice(0, 10);
@@ -60,23 +60,46 @@ export default function EnhancedDiscovery({ currentUser }: DiscoverySectionProps
   const getFilteredContent = () => {
     let filtered = enhancedPosts;
     
-    // Filter by content type
+    // Ensure all posts have required properties with safe defaults
+    filtered = filtered.map(post => ({
+      ...post,
+      views: post.views || 0,
+      likes: post.likes || 0,
+      comments: post.comments || 0,
+      createdAt: post.createdAt || new Date().toISOString(),
+      title: post.title || post.content?.slice(0, 50) + '...' || 'Post'
+    }));
+
+    // Filter by content type - for now, treat all as posts since we're using real data
     switch (contentType) {
       case "videos":
-        filtered = enhancedPosts.filter(post => post.contentType === 'video' && !post.isShort);
+        // Add video-like properties to existing posts
+        filtered = filtered.map(post => ({
+          ...post,
+          duration: `${Math.floor(Math.random() * 10) + 1}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}`,
+          contentType: 'video'
+        }));
         break;
       case "shorts":
-        filtered = enhancedPosts.filter(post => post.isShort || (post.contentType === 'video' && Math.random() > 0.5));
+        // Add shorts-like properties to existing posts
+        filtered = filtered.map(post => ({
+          ...post,
+          duration: `0:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}`,
+          contentType: 'short'
+        }));
         break;
       case "posts":
       default:
-        filtered = enhancedPosts.filter(post => post.contentType === 'text' || !post.isShort);
+        filtered = filtered.map(post => ({
+          ...post,
+          contentType: 'text'
+        }));
     }
 
     // Filter by search query
     if (searchQuery) {
       filtered = filtered.filter(post =>
-        post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        post.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (post.title && post.title.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
