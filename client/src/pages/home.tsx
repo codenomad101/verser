@@ -5,8 +5,7 @@ import CommunitiesSection from "@/components/communities-section";
 import EnhancedDiscovery from "@/components/enhanced-discovery";
 import ProfileSection from "@/components/profile-section";
 import NewsSidebar from "@/components/news-sidebar";
-import LeftNavigation from "@/components/left-navigation";
-import MobileNav from "@/components/mobile-nav";
+import TopNavigation from "@/components/top-navigation";
 import { useWebSocket } from "@/lib/websocket";
 
 type Section = "chat" | "communities" | "discovery" | "profile";
@@ -65,14 +64,16 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 font-inter overflow-hidden">
+    <div className="h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 font-inter">
+      {/* Top Navigation */}
+      <TopNavigation 
+        activeSection={activeSection} 
+        onSectionChange={handleSectionChange}
+      />
+      
       <div className="flex h-full">
-        {/* Left Sidebar - Navigation above News */}
+        {/* Left Sidebar - News Only */}
         <div className="hidden lg:flex flex-col">
-          <LeftNavigation 
-            activeSection={activeSection} 
-            onSectionChange={handleSectionChange}
-          />
           <NewsSidebar 
             activeSection={activeSection} 
             onSectionChange={handleSectionChange}
@@ -94,13 +95,7 @@ export default function Home() {
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="lg:hidden">
-        <MobileNav 
-          activeSection={activeSection}
-          onSectionChange={handleSectionChange}
-        />
-      </div>
+
     </div>
   );
 }
