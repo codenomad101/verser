@@ -5,7 +5,7 @@ import CommunitiesSection from "@/components/communities-section";
 import EnhancedDiscovery from "@/components/enhanced-discovery";
 import ProfileSection from "@/components/profile-section";
 import NewsSidebar from "@/components/news-sidebar";
-import TopNavigation from "@/components/top-navigation";
+import LeftNavigation from "@/components/left-navigation";
 import MobileNav from "@/components/mobile-nav";
 import { useWebSocket } from "@/lib/websocket";
 
@@ -67,15 +67,13 @@ export default function Home() {
 
   return (
     <div className="h-screen bg-gray-50 font-inter">
-      {/* Top Navigation */}
-      <TopNavigation 
-        activeSection={activeSection} 
-        onSectionChange={handleSectionChange}
-      />
-
       <div className="flex h-full">
-        {/* News Sidebar */}
-        <div className="hidden lg:flex">
+        {/* Left Sidebar - Navigation above News */}
+        <div className="hidden lg:flex flex-col">
+          <LeftNavigation 
+            activeSection={activeSection} 
+            onSectionChange={handleSectionChange}
+          />
           <NewsSidebar 
             activeSection={activeSection} 
             onSectionChange={handleSectionChange}

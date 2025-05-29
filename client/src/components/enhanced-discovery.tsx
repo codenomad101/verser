@@ -34,26 +34,43 @@ export default function EnhancedDiscovery({ currentUser }: DiscoverySectionProps
     queryKey: ["/api/users"],
   });
 
-  // Enhanced posts with video and short content types
-  const enhancedPosts = posts.map((post: any) => ({
-    ...post,
-    contentType: post.imageUrl ? (post.imageUrl.includes('video') ? 'video' : 'image') : 'text',
-    duration: post.imageUrl?.includes('video') ? `${Math.floor(Math.random() * 10) + 1}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}` : null,
-    views: post.views || Math.floor(Math.random() * 50000) + 1000,
-    isShort: Math.random() > 0.7,
-    likes: post.likes || Math.floor(Math.random() * 1000) + 50,
-    comments: post.comments || Math.floor(Math.random() * 100) + 5,
-  }));
+  // Enhanced posts with complete data structure and engagement metrics
+  const enhancedPosts = posts.map((post: any) => {
+    const baseViews = Math.floor(Math.random() * 50000) + 1000;
+    const baseLikes = post.likes || Math.floor(Math.random() * 1000) + 50;
+    const baseComments = post.comments || Math.floor(Math.random() * 100) + 5;
+    
+    return {
+      ...post,
+      contentType: post.imageUrl ? (post.imageUrl.includes('video') ? 'video' : 'image') : 'text',
+      duration: post.imageUrl?.includes('video') ? `${Math.floor(Math.random() * 10) + 1}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}` : null,
+      views: baseViews,
+      isShort: Math.random() > 0.7,
+      likes: baseLikes,
+      comments: baseComments,
+      shares: post.shares || Math.floor(Math.random() * 50) + 5,
+      // Calculate engagement score for smart algorithm
+      engagementScore: baseLikes * 2 + baseComments * 3 + baseViews * 0.001,
+      clickCount: Math.floor(baseViews * 0.1), // Simulate click tracking
+    };
+  });
 
   const getSortedContent = (content: any[]) => {
     switch (sortBy) {
       case "latest":
         return [...content].sort((a, b) => new Date(b.createdAt || Date.now()).getTime() - new Date(a.createdAt || Date.now()).getTime());
       case "popular":
-        return [...content].sort((a, b) => ((b.likes || 0) + (b.views || 0)) - ((a.likes || 0) + (a.views || 0)));
+        // Smart algorithm: prioritize most liked and clicked content
+        return [...content].sort((a, b) => {
+          const scoreA = (a.engagementScore || 0) + (a.clickCount || 0) * 5;
+          const scoreB = (b.engagementScore || 0) + (b.clickCount || 0) * 5;
+          return scoreB - scoreA;
+        });
       case "trending":
       default:
-        return trendingPosts.length > 0 ? trendingPosts : content.slice(0, 10);
+        // Use engagement score for trending as well
+        const trending = [...content].sort((a, b) => (b.engagementScore || 0) - (a.engagementScore || 0));
+        return trending.slice(0, 20);
     }
   };
 
