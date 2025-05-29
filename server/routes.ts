@@ -110,6 +110,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // API Routes
 
+  // Demo login endpoint for quick access
+  app.post('/api/demo-login', (req, res) => {
+    const demoUser = {
+      id: 1,
+      username: 'alex_johnson',
+      email: 'alex@example.com',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
+      bio: 'Product Designer',
+      status: 'online',
+      lastSeen: new Date(),
+      showLastSeen: true,
+      showOnlineStatus: true,
+      isVerified: false,
+      followersCount: 1250,
+      followingCount: 890,
+      about: null,
+      createdAt: new Date()
+    };
+    
+    const token = generateToken(demoUser.id, demoUser.username, demoUser.email);
+    
+    res.status(200).json({
+      user: demoUser,
+      token
+    });
+  });
+
   // Authentication
   app.post('/api/auth/register', async (req, res) => {
     try {
@@ -154,12 +181,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Quick demo account bypass
       if (req.body.email === 'alex@example.com' && req.body.password === 'password123') {
-        // Create demo user directly
+        console.log('Demo account login detected');
+        
+        // Generate token for demo user
+        const token = generateToken(1, 'alex_johnson', 'alex@example.com');
+        
         const demoUser = {
           id: 1,
           username: 'alex_johnson',
           email: 'alex@example.com',
-          password: 'hashed_password', // Won't be returned
           avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
           bio: 'Product Designer',
           status: 'online',
@@ -173,17 +203,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           createdAt: new Date()
         };
         
-        // Generate token for demo user
-        const token = generateToken(demoUser.id, demoUser.username, demoUser.email);
-        
-        // Remove password from response
-        const { password, ...userWithoutPassword } = demoUser;
+        console.log('Returning demo user:', demoUser);
         
         return res.status(200).json({
-          user: userWithoutPassword,
+          user: demoUser,
           token
         });
       }
+      
+      // Process other login attempts
+      const validatedData = loginSchema.parse(req.body);
       
       // Find user by email for other accounts
       const user = await storage.getUserByEmail(validatedData.email);
