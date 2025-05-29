@@ -150,33 +150,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/login', async (req, res) => {
     try {
-      const validatedData = loginSchema.parse(req.body);
+      console.log('Login attempt:', req.body);
       
-      // Create demo user if it doesn't exist and is a demo account
-      if (validatedData.email === 'alex@example.com' && validatedData.password === 'password123') {
-        let user = await storage.getUserByEmail(validatedData.email);
-        
-        if (!user) {
-          // Create demo user on the fly
-          const hashedPassword = await hashPassword(validatedData.password);
-          user = await storage.createUser({
-            username: 'alex_johnson',
-            email: 'alex@example.com',
-            password: hashedPassword,
-            bio: 'Product Designer',
-            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face'
-          });
-        }
+      // Quick demo account bypass
+      if (req.body.email === 'alex@example.com' && req.body.password === 'password123') {
+        // Create demo user directly
+        const demoUser = {
+          id: 1,
+          username: 'alex_johnson',
+          email: 'alex@example.com',
+          password: 'hashed_password', // Won't be returned
+          avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
+          bio: 'Product Designer',
+          status: 'online',
+          lastSeen: new Date(),
+          showLastSeen: true,
+          showOnlineStatus: true,
+          isVerified: false,
+          followersCount: 1250,
+          followingCount: 890,
+          about: null,
+          createdAt: new Date()
+        };
         
         // Generate token for demo user
-        const token = generateToken(user.id, user.username, user.email);
-        
-        // Update user status and last seen
-        await storage.updateUserStatus(user.id, 'online');
-        await storage.updateUserSettings(user.id, { lastSeen: new Date() });
+        const token = generateToken(demoUser.id, demoUser.username, demoUser.email);
         
         // Remove password from response
-        const { password: userPassword, ...userWithoutPassword } = user;
+        const { password, ...userWithoutPassword } = demoUser;
         
         return res.status(200).json({
           user: userWithoutPassword,
@@ -184,33 +185,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Find user by email for non-demo accounts
-      const existingUser = await storage.getUserByEmail(validatedData.email);
-      if (!existingUser) {
+      // Find user by email for other accounts
+      const user = await storage.getUserByEmail(validatedData.email);
+      if (!user) {
         return res.status(401).json({ message: 'Invalid email or password' });
       }
 
       // Check password
-      const isPasswordValid = await comparePassword(validatedData.password, existingUser.password);
+      const isPasswordValid = await comparePassword(validatedData.password, user.password);
       if (!isPasswordValid) {
         return res.status(401).json({ message: 'Invalid email or password' });
       }
 
       // Update user status and last seen
-      await storage.updateUserStatus(existingUser.id, 'online');
-      await storage.updateUserSettings(existingUser.id, { lastSeen: new Date() });
+      await storage.updateUserStatus(user.id, 'online');
+      await storage.updateUserSettings(user.id, { lastSeen: new Date() });
 
       // Generate token
-      const token2 = generateToken(existingUser.id, existingUser.username, existingUser.email);
+      const token = generateToken(user.id, user.username, user.email);
       
       // Remove password from response
-      const { password: existingUserPassword, ...existingUserWithoutPassword } = existingUser;
+      const { password, ...userWithoutPassword } = user;
       
       res.status(200).json({
-        user: existingUserWithoutPassword,
-        token: token2
+        user: userWithoutPassword,
+        token
       });
     } catch (error) {
+      console.log('Login error:', error);
       res.status(400).json({ message: 'Invalid login data' });
     }
   });
