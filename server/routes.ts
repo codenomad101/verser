@@ -152,39 +152,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = loginSchema.parse(req.body);
       
-      // Find user by email
-      const user = await storage.getUserByEmail(validatedData.email);
-      if (!user) {
+      // Create demo user if it doesn't exist and is a demo account
+      if (validatedData.email === 'alex@example.com' && validatedData.password === 'password123') {
+        let user = await storage.getUserByEmail(validatedData.email);
+        
+        if (!user) {
+          // Create demo user on the fly
+          const hashedPassword = await hashPassword(validatedData.password);
+          user = await storage.createUser({
+            username: 'alex_johnson',
+            email: 'alex@example.com',
+            password: hashedPassword,
+            bio: 'Product Designer',
+            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face'
+          });
+        }
+        
+        // Generate token for demo user
+        const token = generateToken(user.id, user.username, user.email);
+        
+        // Update user status and last seen
+        await storage.updateUserStatus(user.id, 'online');
+        await storage.updateUserSettings(user.id, { lastSeen: new Date() });
+        
+        // Remove password from response
+        const { password: userPassword, ...userWithoutPassword } = user;
+        
+        return res.status(200).json({
+          user: userWithoutPassword,
+          token
+        });
+      }
+      
+      // Find user by email for non-demo accounts
+      const existingUser = await storage.getUserByEmail(validatedData.email);
+      if (!existingUser) {
         return res.status(401).json({ message: 'Invalid email or password' });
       }
 
-      // Check password (temporary fix for demo accounts)
-      let isPasswordValid = false;
-      
-      // For demo accounts, allow plain text password comparison
-      if (validatedData.email.includes('@example.com') && validatedData.password === 'password123') {
-        isPasswordValid = true;
-      } else {
-        isPasswordValid = await comparePassword(validatedData.password, user.password);
-      }
-      
+      // Check password
+      const isPasswordValid = await comparePassword(validatedData.password, existingUser.password);
       if (!isPasswordValid) {
         return res.status(401).json({ message: 'Invalid email or password' });
       }
 
       // Update user status and last seen
-      await storage.updateUserStatus(user.id, 'online');
-      await storage.updateUserSettings(user.id, { lastSeen: new Date() });
+      await storage.updateUserStatus(existingUser.id, 'online');
+      await storage.updateUserSettings(existingUser.id, { lastSeen: new Date() });
 
       // Generate token
-      const token = generateToken(user.id, user.username, user.email);
+      const token2 = generateToken(existingUser.id, existingUser.username, existingUser.email);
       
       // Remove password from response
-      const { password, ...userWithoutPassword } = user;
+      const { password: existingUserPassword, ...existingUserWithoutPassword } = existingUser;
       
-      res.json({
-        user: userWithoutPassword,
-        token
+      res.status(200).json({
+        user: existingUserWithoutPassword,
+        token: token2
       });
     } catch (error) {
       res.status(400).json({ message: 'Invalid login data' });
