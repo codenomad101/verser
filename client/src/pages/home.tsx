@@ -65,7 +65,7 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen bg-gray-50 font-inter">
+    <div className="h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 font-inter overflow-hidden">
       <div className="flex h-full">
         {/* Left Sidebar - Navigation above News */}
         <div className="hidden lg:flex flex-col">
@@ -80,8 +80,17 @@ export default function Home() {
         </div>
 
         {/* Main Content - Single Active Section */}
-        <main className="flex-1 flex flex-col">
-          {renderActiveSection()}
+        <main className="flex-1 flex flex-col relative">
+          {/* Floating background elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-20 left-20 w-32 h-32 bg-blue-200 rounded-full opacity-20 floating-animation"></div>
+            <div className="absolute bottom-32 right-32 w-24 h-24 bg-purple-200 rounded-full opacity-30 floating-animation" style={{animationDelay: '2s'}}></div>
+            <div className="absolute top-1/2 left-1/3 w-16 h-16 bg-pink-200 rounded-full opacity-25 floating-animation" style={{animationDelay: '4s'}}></div>
+          </div>
+          
+          <div className="relative z-10 h-full">
+            {renderActiveSection()}
+          </div>
         </main>
       </div>
 

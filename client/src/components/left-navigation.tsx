@@ -18,14 +18,20 @@ export default function LeftNavigation({ activeSection, onSectionChange }: LeftN
   ];
 
   return (
-    <div className="bg-white border-r border-gray-200 w-52">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-100">
-        <h2 className="text-sm font-semibold text-gray-700">Navigation</h2>
+    <div className="bg-gradient-to-b from-blue-50 to-white border-r border-blue-200 w-52 shadow-lg">
+      {/* Verser Branding Header */}
+      <div className="p-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+            <span className="text-lg font-bold">V</span>
+          </div>
+          <h1 className="text-lg font-bold tracking-wide">Verser</h1>
+        </div>
+        <p className="text-blue-100 text-xs mt-1">Connect • Discover • Share</p>
       </div>
 
       {/* Navigation Items */}
-      <div className="p-3">
+      <div className="p-3 space-y-2">
         {navigationItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeSection === item.id;
@@ -34,30 +40,33 @@ export default function LeftNavigation({ activeSection, onSectionChange }: LeftN
             <div key={item.id} className="relative">
               <button
                 onClick={() => onSectionChange(item.id)}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 mb-2 ${
+                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-300 transform hover:scale-105 ${
                   isActive 
-                    ? 'bg-blue-50 border border-blue-200' 
-                    : 'hover:bg-gray-50'
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg' 
+                    : 'hover:bg-white hover:shadow-md bg-blue-25'
                 }`}
               >
-                <div className={`p-2 rounded-full ${
-                  isActive ? 'bg-blue-100' : 'bg-gray-100'
+                <div className={`p-2 rounded-xl ${
+                  isActive ? 'bg-white/20' : 'bg-gradient-to-br from-blue-100 to-purple-100'
                 }`}>
                   <Icon className={`h-4 w-4 ${
-                    isActive ? item.color : 'text-gray-500'
+                    isActive ? 'text-white' : item.color
                   }`} />
                 </div>
-                <span className={`text-sm font-medium ${
-                  isActive ? 'text-blue-700' : 'text-gray-600'
+                <span className={`text-sm font-semibold ${
+                  isActive ? 'text-white' : 'text-gray-700'
                 }`}>
                   {item.label}
                 </span>
                 
                 {/* Notification Badge */}
                 {item.notifications > 0 && (
-                  <span className="ml-auto w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                    {item.notifications}
-                  </span>
+                  <div className="ml-auto relative">
+                    <span className="w-6 h-6 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full flex items-center justify-center font-bold shadow-lg animate-pulse">
+                      {item.notifications}
+                    </span>
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full animate-ping"></div>
+                  </div>
                 )}
               </button>
             </div>
