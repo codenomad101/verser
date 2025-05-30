@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { apiRequest } from "@/lib/queryClient";
-import { Plus, Search, UserPlus, Heart, MessageCircle, Share, Bookmark, Image, Code, Link, ArrowLeft } from "lucide-react";
+import { Plus, Search, UserPlus, Heart, MessageCircle, Share, Bookmark, Image, Code, Link, ArrowLeft, Video, Upload } from "lucide-react";
 import { format } from "date-fns";
+import NewCommunityDialog from "@/components/new-community-dialog";
+import NewPostDialog from "@/components/new-post-dialog";
 
 interface CommunitiesSectionProps {
   currentUser: { id: number; username: string };
@@ -18,6 +20,7 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
   const [postContent, setPostContent] = useState("");
   const [isMobile, setIsMobile] = useState(false);
   const [showNewCommunityDialog, setShowNewCommunityDialog] = useState(false);
+  const [showNewPostDialog, setShowNewPostDialog] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -129,7 +132,11 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
             <div className="p-4 border-b border-green-200">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold gradient-text">Communities</h2>
-                <Button size="sm" className="modern-button text-white border-0">
+                <Button 
+                  size="sm" 
+                  className="modern-button text-white border-0"
+                  onClick={() => setShowNewCommunityDialog(true)}
+                >
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -204,6 +211,53 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
             </div>
 
             <ScrollArea className="flex-1 p-4 bg-gray-50">
+              {/* Post Creation Area */}
+              <div className="bg-white rounded-xl p-4 shadow-sm mb-4">
+                <div className="flex items-center space-x-3 mb-3">
+                  <img 
+                    src={`https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?w=60&h=60&fit=crop&crop=face`}
+                    alt={currentUser.username}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 justify-start text-gray-500"
+                    onClick={() => setShowNewPostDialog(true)}
+                  >
+                    What's happening in {activeCommunityData.name}?
+                  </Button>
+                </div>
+                <div className="flex items-center space-x-4 pt-3 border-t">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-blue-600 hover:bg-blue-50"
+                    onClick={() => setShowNewPostDialog(true)}
+                  >
+                    <Image className="h-4 w-4 mr-2" />
+                    Photo
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-red-600 hover:bg-red-50"
+                    onClick={() => setShowNewPostDialog(true)}
+                  >
+                    <Video className="h-4 w-4 mr-2" />
+                    Video
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-purple-600 hover:bg-purple-50"
+                    onClick={() => setShowNewPostDialog(true)}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Shorts
+                  </Button>
+                </div>
+              </div>
+
               <div className="space-y-4">
                 {posts?.map((post: any) => (
                   <div key={post.id} className="bg-white rounded-xl p-4 shadow-sm hover-lift">
@@ -318,6 +372,27 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
       </div>
         </section>
       </div>
+
+      {/* Dialogs */}
+      <NewCommunityDialog 
+        open={showNewCommunityDialog}
+        onOpenChange={setShowNewCommunityDialog}
+        currentUser={currentUser}
+        onCommunityCreated={(communityId) => {
+          setActiveCommunity(communityId);
+          setShowNewCommunityDialog(false);
+        }}
+      />
+
+      <NewPostDialog 
+        open={showNewPostDialog}
+        onOpenChange={setShowNewPostDialog}
+        currentUser={currentUser}
+        activeCommunity={activeCommunity || undefined}
+        onPostCreated={() => {
+          setShowNewPostDialog(false);
+        }}
+      />
     </div>
   );
 }
