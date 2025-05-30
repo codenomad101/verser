@@ -33,7 +33,7 @@ export default function NewChatDialog({ open, onOpenChange, currentUser, onConve
     onSuccess: (conversation) => {
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
       onConversationCreated(conversation.id);
-      setOpen(false);
+      onOpenChange(false);
       setSearchQuery("");
     },
   });
@@ -51,7 +51,7 @@ export default function NewChatDialog({ open, onOpenChange, currentUser, onConve
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button className="w-full mb-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
           <Plus className="h-4 w-4 mr-2" />
