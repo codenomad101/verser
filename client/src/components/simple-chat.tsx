@@ -45,7 +45,9 @@ export default function SimpleChat({ currentUser, lastMessage, sendMessage }: Si
       return response.json();
     },
     onSuccess: () => {
+      // Force refresh the messages immediately
       queryClient.invalidateQueries({ queryKey: ["/api/conversations", selectedConversation, "messages"] });
+      queryClient.refetchQueries({ queryKey: ["/api/conversations", selectedConversation, "messages"] });
       setMessageText("");
     },
   });
