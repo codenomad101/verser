@@ -275,7 +275,12 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
             {/* Messages */}
             <ScrollArea className="flex-1 p-4">
               <div className="space-y-4">
-                {messages.map((message: any) => {
+                {messages.length === 0 ? (
+                  <div className="text-center text-gray-500 py-8">
+                    <p>No messages yet. Start the conversation!</p>
+                  </div>
+                ) : (
+                  messages.map((message: any) => {
                     const isOwn = message.userId === currentUser.id;
                     const sender = users.find((u: any) => u.id === message.userId);
                     
@@ -310,7 +315,8 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
                         </div>
                       </div>
                     );
-                  })}
+                  })
+                )}
                 <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
