@@ -315,17 +315,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/users/:id/settings', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  app.patch('/api/users/settings', authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = parseInt(req.params.id);
-      
-      // Check if user is updating their own settings
-      if (!req.user || req.user.id !== userId) {
-        return res.status(403).json({ message: 'Can only update your own settings' });
+      if (!req.user) {
+        return res.status(401).json({ message: 'Not authenticated' });
       }
 
-      const validatedData = updateUserSettingsSchema.parse(req.body);
-      const updatedUser = await storage.updateUserSettings(userId, validatedData);
+      // Allow updating bio, about, avatar, and other profile fields
+      const allowedFields = ['bio', 'about', 'avatar', 'showLastSeen', 'showOnlineStatus'];
+      const updateData: any = {};
+      
+      for (const field of allowedFields) {
+        if (req.body[field] !== undefined) {
+          updateData[field] = req.body[field];
+        }
+      }
+
+      const updatedUser = await storage.updateUserSettings(req.user.id, updateData);
       
       if (!updatedUser) {
         return res.status(404).json({ message: 'User not found' });
@@ -334,7 +340,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { password, ...userWithoutPassword } = updatedUser;
       res.json(userWithoutPassword);
     } catch (error) {
-      res.status(400).json({ message: 'Invalid settings data' });
+      console.error('Settings update error:', error);
+      res.status(400).json({ message: 'Failed to update settings' });
+    }
+  });
+
+  // Notifications
+  app.get('/api/notifications', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Return sample notifications for now
+      const notifications = [
+        {
+          id: 1,
+          type: 'like',
+          message: 'Alex Johnson liked your post',
+          avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face',
+          timestamp: new Date(Date.now() - 5 * 60 * 1000),
+          read: false
+        },
+        {
+          id: 2,
+          type: 'comment',
+          message: 'Sarah Chen commented on your post',
+          avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b55c?w=40&h=40&fit=crop&crop=face',
+          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+          read: false
+        }
+      ];
+      res.json(notifications);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch notifications' });
+    }
+  });
+
+  // Search
+  app.get('/api/search', async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      if (!query) {
+        return res.json({ users: [], posts: [], communities: [] });
+      }
+
+      const [users, posts, communities] = await Promise.all([
+        storage.getAllUsers(),
+        storage.getAllPosts(),
+        storage.getAllCommunities()
+      ]);
+
+      const searchResults = {
+        users: users.filter(user => 
+          user.username.toLowerCase().includes(query.toLowerCase()) ||
+          (user.bio && user.bio.toLowerCase().includes(query.toLowerCase()))
+        ).map(user => {
+          const { password, ...userWithoutPassword } = user;
+          return userWithoutPassword;
+        }),
+        posts: posts.filter(post => 
+          post.content.toLowerCase().includes(query.toLowerCase()) ||
+          (post.title && post.title.toLowerCase().includes(query.toLowerCase()))
+        ),
+        communities: communities.filter(community => 
+          community.name.toLowerCase().includes(query.toLowerCase()) ||
+          (community.description && community.description.toLowerCase().includes(query.toLowerCase()))
+        )
+      };
+
+      res.json(searchResults);
+    } catch (error) {
+      res.status(500).json({ message: 'Search failed' });
     }
   });
 
@@ -345,6 +418,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(conversations);
     } catch (error) {
       res.status(500).json({ message: 'Failed to fetch conversations' });
+    }
+  });
+
+  app.post('/api/conversations', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+
+      const { name, type = 'direct' } = req.body;
+      const conversation = await storage.createConversation({
+        name: name || 'New Chat',
+        type,
+        description: null,
+        memberCount: 1
+      });
+
+      res.status(201).json(conversation);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to create conversation' });
     }
   });
 

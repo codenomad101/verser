@@ -1,7 +1,10 @@
-import { MessageSquare, Users, Compass, User, Bell, Search } from "lucide-react";
+import { useState } from "react";
+import { MessageSquare, Users, Compass, User, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
+import NotificationsSection from "@/components/notifications-section";
+import { useQuery } from "@tanstack/react-query";
 
 interface TopNavigationProps {
   activeSection: string;
@@ -10,12 +13,19 @@ interface TopNavigationProps {
 
 export default function TopNavigation({ activeSection, onSectionChange }: TopNavigationProps) {
   const { user } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
   const navigationItems = [
     { id: "chat", icon: MessageSquare, label: "Chat", notifications: 3 },
     { id: "communities", icon: Users, label: "Communities", notifications: 0 },
     { id: "discovery", icon: Compass, label: "Discovery", notifications: 0 },
   ];
+
+  const { data: searchResults } = useQuery({
+    queryKey: ["/api/search", searchQuery],
+    enabled: searchQuery.length > 2,
+  });
 
   return (
     <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
@@ -70,20 +80,64 @@ export default function TopNavigation({ activeSection, onSectionChange }: TopNav
               <Input
                 type="text"
                 placeholder="Search posts, communities, users..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSearchResults(e.target.value.length > 2);
+                }}
+                onFocus={() => searchQuery.length > 2 && setShowSearchResults(true)}
                 className="pl-10 pr-4 py-2 w-full bg-gray-50 border-gray-200 focus:bg-white focus:border-blue-300 rounded-full"
               />
+              
+              {/* Search Results Dropdown */}
+              {showSearchResults && searchResults && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
+                  {searchResults.users?.length > 0 && (
+                    <div className="p-3 border-b">
+                      <h4 className="font-medium text-gray-900 mb-2">Users</h4>
+                      {searchResults.users.slice(0, 3).map((user: any) => (
+                        <div key={user.id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                          <img src={user.avatar} alt={user.username} className="h-8 w-8 rounded-full" />
+                          <div>
+                            <p className="font-medium">{user.username}</p>
+                            <p className="text-sm text-gray-500">{user.bio}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {searchResults.communities?.length > 0 && (
+                    <div className="p-3 border-b">
+                      <h4 className="font-medium text-gray-900 mb-2">Communities</h4>
+                      {searchResults.communities.slice(0, 3).map((community: any) => (
+                        <div key={community.id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                          <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                            <span className="text-white text-sm font-bold">{community.name[0]}</span>
+                          </div>
+                          <div>
+                            <p className="font-medium">{community.name}</p>
+                            <p className="text-sm text-gray-500">{community.memberCount} members</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {(!searchResults.users?.length && !searchResults.communities?.length && !searchResults.posts?.length) && (
+                    <div className="p-4 text-center text-gray-500">
+                      No results found for "{searchQuery}"
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Right Section - Notifications and Profile */}
           <div className="flex items-center space-x-4">
             {/* Notifications */}
-            <Button variant="ghost" size="sm" className="relative p-2">
-              <Bell className="h-5 w-5 text-gray-600" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                2
-              </span>
-            </Button>
+            <NotificationsSection />
 
             {/* Profile */}
             <Button
