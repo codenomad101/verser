@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { apiRequest } from "@/lib/queryClient";
-import { Plus, Search, UserPlus, Heart, MessageCircle, Share, Bookmark, Image, Code, Link } from "lucide-react";
+import { Plus, Search, UserPlus, Heart, MessageCircle, Share, Bookmark, Image, Code, Link, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 
 interface CommunitiesSectionProps {
@@ -13,10 +13,19 @@ interface CommunitiesSectionProps {
 }
 
 export default function CommunitiesSection({ currentUser }: CommunitiesSectionProps) {
-  const [activeCommunity, setActiveCommunity] = useState<number>(1);
+  const [activeCommunity, setActiveCommunity] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [postContent, setPostContent] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+  const [showNewCommunityDialog, setShowNewCommunityDialog] = useState(false);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const { data: communities } = useQuery({
     queryKey: ["/api/communities"],

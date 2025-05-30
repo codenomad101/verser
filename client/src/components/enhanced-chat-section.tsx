@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Send, Smile, Paperclip, Phone, Video, MoreVertical, Search, Hash } from "lucide-react";
+import { Send, Smile, Paperclip, Phone, Video, MoreVertical, Search, Hash, Plus, ArrowLeft } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
@@ -21,8 +21,17 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
   const [messageText, setMessageText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showNewChatDialog, setShowNewChatDialog] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const { data: conversations = [] } = useQuery({
     queryKey: ["/api/conversations"],
@@ -117,6 +126,16 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {isMobile && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-white hover:bg-white/20 p-1 h-8 w-8"
+              onClick={() => setShowNewChatDialog(true)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          )}
           <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
           <span className="text-xs">Online</span>
         </div>
@@ -206,10 +225,10 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
                   <Button 
                     size="sm" 
                     variant="ghost" 
-                    className="md:hidden"
+                    className="md:hidden p-1 h-8 w-8"
                     onClick={() => setSelectedConversation(null)}
                   >
-                    ←
+                    <ArrowLeft className="h-4 w-4" />
                   </Button>
                   <Avatar className="h-10 w-10">
                     <AvatarFallback className="bg-gradient-to-r from-green-500 to-blue-500 text-white">
@@ -330,6 +349,17 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
         )}
         </div>
       </div>
+
+      {/* New Chat Dialog */}
+      <NewChatDialog 
+        open={showNewChatDialog}
+        onOpenChange={setShowNewChatDialog}
+        currentUser={currentUser}
+        onChatCreated={(conversationId) => {
+          setSelectedConversation(conversationId);
+          setShowNewChatDialog(false);
+        }}
+      />
     </div>
   );
 }
