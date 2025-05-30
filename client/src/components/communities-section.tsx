@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,6 +107,16 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {isMobile && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-white hover:bg-white/20 p-1 h-8 w-8"
+              onClick={() => setShowNewCommunityDialog(true)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          )}
           <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
           <span className="text-xs">Active</span>
         </div>
@@ -114,8 +124,8 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
 
       <div className="flex-1 bg-gradient-to-br from-white via-green-50 to-blue-50">
         <section className="flex-1 flex h-full">
-          {/* Communities List */}
-          <div className="w-full lg:w-80 border-r border-green-200 flex flex-col bg-white/80 backdrop-blur-sm">
+          {/* Communities List - Full screen on mobile, sidebar on desktop */}
+          <div className={`${activeCommunity ? 'hidden md:flex md:w-80' : 'flex w-full md:w-80'} border-r border-green-200 flex-col bg-white/80 backdrop-blur-sm`}>
             <div className="p-4 border-b border-green-200">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold gradient-text">Communities</h2>
@@ -162,12 +172,21 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
         </ScrollArea>
       </div>
 
-        {/* Community Feed */}
-        <div className="hidden lg:flex lg:flex-1 lg:flex-col">
+        {/* Community Feed - Full screen on mobile when community selected */}
+        <div className={`${activeCommunity ? 'flex w-full md:flex-1' : 'hidden md:flex md:flex-1'} flex-col`}>
         {activeCommunityData && (
           <>
             <div className="p-4 border-b border-gray-100 bg-white">
               <div className="flex items-center space-x-3">
+                {/* Back button for mobile */}
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="md:hidden p-1 h-8 w-8"
+                  onClick={() => setActiveCommunity(null)}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
                 <div className={`w-10 h-10 ${getColorClass(activeCommunityData.color)} rounded-xl flex items-center justify-center text-white`}>
                   {getIconComponent(activeCommunityData.icon)}
                 </div>
