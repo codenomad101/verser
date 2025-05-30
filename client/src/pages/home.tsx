@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import EnhancedChatSection from "@/components/enhanced-chat-section";
+import SimpleChat from "@/components/simple-chat";
 import CommunitiesSection from "@/components/communities-section";
 import DiscoverySection from "@/components/discovery-section";
 import EnhancedDiscovery from "@/components/enhanced-discovery";
@@ -37,7 +37,7 @@ export default function Home() {
     switch (activeSection) {
       case "chat":
         return (
-          <EnhancedChatSection 
+          <SimpleChat 
             currentUser={currentUser}
             lastMessage={lastMessage}
             sendMessage={sendMessage}
@@ -51,7 +51,7 @@ export default function Home() {
         return <ProfileSection currentUser={currentUser} />;
       default:
         return (
-          <EnhancedChatSection 
+          <SimpleChat 
             currentUser={currentUser}
             lastMessage={lastMessage}
             sendMessage={sendMessage}
