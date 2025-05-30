@@ -1,11 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
-import { Search, Heart, MessageCircle, Share, Bookmark, MoreHorizontal } from "lucide-react";
+import { 
+  Heart, 
+  MessageCircle, 
+  Share, 
+  Bookmark, 
+  Search, 
+  Plus, 
+  Play, 
+  Camera,
+  Video,
+  Upload,
+  TrendingUp,
+  Clock,
+  Flame
+} from "lucide-react";
 import { format } from "date-fns";
+import NewPostDialog from "@/components/new-post-dialog";
 
 interface DiscoverySectionProps {
   currentUser: { id: number; username: string };
@@ -13,15 +30,24 @@ interface DiscoverySectionProps {
 
 export default function DiscoverySection({ currentUser }: DiscoverySectionProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState<"trending" | "latest" | "popular">("trending");
+  const [selectedTab, setSelectedTab] = useState<"trending" | "recent" | "following">("trending");
+  const [showNewPostDialog, setShowNewPostDialog] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: posts } = useQuery({
-    queryKey: activeFilter === "trending" ? ["/api/posts/trending"] : ["/api/posts"],
-  });
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
-  const { data: users } = useQuery({
-    queryKey: ["/api/users"],
+  const { data: posts = [] } = useQuery({
+    queryKey: ["/api/posts", selectedTab],
+    queryFn: () => {
+      const endpoint = selectedTab === "trending" ? "/api/posts/trending" : "/api/posts";
+      return fetch(endpoint).then(res => res.json());
+    },
   });
 
   const likePostMutation = useMutation({
@@ -30,191 +56,274 @@ export default function DiscoverySection({ currentUser }: DiscoverySectionProps)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/posts/trending"] });
     },
   });
 
-  const filteredPosts = posts?.filter((post: any) =>
+  const filteredPosts = (posts && Array.isArray(posts)) ? posts.filter((post: any) =>
+    post.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     post.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
     post.tags?.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  ) : [];
 
-  const trendingTopics = [
-    { tag: "#WebDevelopment", count: "1.2k posts", description: "Latest frameworks and tools" },
-    { tag: "#AIInnovation", count: "856 posts", description: "Machine learning breakthroughs" },
-    { tag: "#StartupLife", count: "623 posts", description: "Entrepreneurship stories" },
-  ];
-
-  const suggestedUsers = users?.slice(0, 2).map(user => ({
-    ...user,
-    role: user.bio || "Developer"
-  }));
+  const getPostTypeIcon = (type: string) => {
+    switch (type) {
+      case "image": return <Camera className="h-4 w-4" />;
+      case "video": return <Video className="h-4 w-4" />;
+      case "short": return <Play className="h-4 w-4" />;
+      default: return null;
+    }
+  };
 
   return (
-    <section className="flex-1 flex bg-white">
-      <div className="w-full max-w-2xl mx-auto">
-        <div className="p-4 border-b border-gray-100 bg-white">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Discover</h2>
-            <div className="flex space-x-2">
-              <Button
-                size="sm"
-                variant={activeFilter === "trending" ? "default" : "ghost"}
-                onClick={() => setActiveFilter("trending")}
-                className={activeFilter === "trending" ? "bg-green-500 hover:bg-green-600" : ""}
-              >
-                Trending
-              </Button>
-              <Button
-                size="sm"
-                variant={activeFilter === "latest" ? "default" : "ghost"}
-                onClick={() => setActiveFilter("latest")}
-              >
-                Latest
-              </Button>
-              <Button
-                size="sm"
-                variant={activeFilter === "popular" ? "default" : "ghost"}
-                onClick={() => setActiveFilter("popular")}
-              >
-                Popular
-              </Button>
-            </div>
-          </div>
-          <div className="relative">
-            <Input
-              type="text"
-              placeholder="Search content..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-8 w-8 border-2 border-white/30">
+            <AvatarFallback className="bg-white/20 text-white text-sm font-semibold">
+              {currentUser.username.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <h3 className="font-semibold text-sm">{currentUser.username}</h3>
+            <p className="text-xs text-purple-100">Discovery</p>
           </div>
         </div>
+        <div className="flex items-center gap-2">
+          {isMobile && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-white hover:bg-white/20 p-1 h-8 w-8"
+              onClick={() => setShowNewPostDialog(true)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          )}
+          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+          <span className="text-xs">Discover</span>
+        </div>
+      </div>
 
-        <ScrollArea className="flex-1 p-4">
-          <div className="space-y-6">
-            {filteredPosts?.map((post: any) => (
-              <article key={post.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover-lift">
-                <div className="flex items-start space-x-3 mb-4">
-                  <img 
-                    src={post.user?.avatar || `https://images.unsplash.com/photo-1517841905240-472988babdf9?w=60&h=60&fit=crop&crop=face`}
-                    alt={post.user?.username || 'User'}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <span className="font-semibold text-gray-900">{post.user?.username || 'User'}</span>
-                      <span className="text-green-600 text-sm font-medium">@{post.user?.username || 'user'}</span>
-                      <span className="text-gray-500 text-sm">
-                        • {format(new Date(post.createdAt), 'h:mm a')}
+      {/* Search and Tabs */}
+      <div className="p-4 bg-white border-b">
+        <div className="relative mb-4">
+          <Input
+            type="text"
+            placeholder="Search posts, creators, hashtags..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        </div>
+        
+        <div className="flex gap-2">
+          <Button
+            variant={selectedTab === "trending" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedTab("trending")}
+            className="flex items-center gap-2"
+          >
+            <TrendingUp className="h-4 w-4" />
+            Trending
+          </Button>
+          <Button
+            variant={selectedTab === "recent" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedTab("recent")}
+            className="flex items-center gap-2"
+          >
+            <Clock className="h-4 w-4" />
+            Recent
+          </Button>
+          <Button
+            variant={selectedTab === "following" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedTab("following")}
+            className="flex items-center gap-2"
+          >
+            <Flame className="h-4 w-4" />
+            Following
+          </Button>
+        </div>
+      </div>
+
+      {/* Create Post Area */}
+      {!isMobile && (
+        <div className="p-4 bg-white border-b">
+          <div className="flex items-center space-x-3 mb-3">
+            <Avatar className="h-10 w-10">
+              <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+                {currentUser.username.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <Button 
+              variant="outline" 
+              className="flex-1 justify-start text-gray-500"
+              onClick={() => setShowNewPostDialog(true)}
+            >
+              Share your moment with the world...
+            </Button>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-blue-600 hover:bg-blue-50"
+              onClick={() => setShowNewPostDialog(true)}
+            >
+              <Camera className="h-4 w-4 mr-2" />
+              Photo
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-red-600 hover:bg-red-50"
+              onClick={() => setShowNewPostDialog(true)}
+            >
+              <Video className="h-4 w-4 mr-2" />
+              Video
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-purple-600 hover:bg-purple-50"
+              onClick={() => setShowNewPostDialog(true)}
+            >
+              <Play className="h-4 w-4 mr-2" />
+              Shorts
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Posts Feed */}
+      <ScrollArea className="flex-1 bg-gray-50">
+        <div className="p-4 space-y-4">
+          {filteredPosts.length > 0 ? filteredPosts.map((post: any) => (
+            <div key={post.id} className="bg-white rounded-xl shadow-sm overflow-hidden">
+              {/* Post Header */}
+              <div className="p-4 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                      {post.user?.username?.charAt(0).toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-gray-900">
+                        {post.user?.username || 'User'}
                       </span>
-                      {post.isTrending && (
-                        <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
-                          Trending
-                        </span>
+                      {post.type && post.type !== "text" && (
+                        <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                          {getPostTypeIcon(post.type)}
+                          {post.type.charAt(0).toUpperCase() + post.type.slice(1)}
+                        </Badge>
                       )}
                     </div>
-                    {post.title && (
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">{post.title}</h3>
-                    )}
-                    <p className="text-gray-600 mb-4">{post.content}</p>
-                    
-                    {post.imageUrl && (
-                      <img 
-                        src={post.imageUrl}
-                        alt="Post content"
-                        className="w-full h-64 object-cover rounded-lg mb-4"
-                      />
-                    )}
-                    
-                    {post.tags && post.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {post.tags.map((tag: string, index: number) => (
-                          <span 
-                            key={index}
-                            className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium"
-                          >
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex space-x-6">
-                        <button 
-                          onClick={() => likePostMutation.mutate(post.id)}
-                          className="flex items-center space-x-2 text-gray-500 hover:text-green-600 transition-colors"
-                        >
-                          <Heart className="h-4 w-4" />
-                          <span className="text-sm">{post.likes}</span>
-                        </button>
-                        <button className="flex items-center space-x-2 text-gray-500 hover:text-green-600 transition-colors">
-                          <MessageCircle className="h-4 w-4" />
-                          <span className="text-sm">{post.comments}</span>
-                        </button>
-                        <button className="flex items-center space-x-2 text-gray-500 hover:text-green-600 transition-colors">
-                          <Share className="h-4 w-4" />
-                          <span className="text-sm">Share</span>
-                        </button>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                          <Bookmark className="h-4 w-4" />
-                        </button>
-                        <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
+                    <span className="text-gray-500 text-sm">
+                      {format(new Date(post.createdAt), 'MMM d, h:mm a')}
+                    </span>
                   </div>
                 </div>
-              </article>
-            ))}
-          </div>
-        </ScrollArea>
-      </div>
-
-      {/* Right Sidebar for Discovery */}
-      <div className="hidden xl:block xl:w-80 border-l border-gray-200 bg-gray-50">
-        <div className="p-4">
-          <h3 className="font-semibold text-gray-900 mb-4">Trending Topics</h3>
-          <div className="space-y-3">
-            {trendingTopics.map((topic, index) => (
-              <div key={index} className="bg-white p-3 rounded-lg hover:shadow-sm transition-shadow cursor-pointer">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-900">{topic.tag}</span>
-                  <span className="text-sm text-gray-500">{topic.count}</span>
-                </div>
-                <p className="text-sm text-gray-600 mt-1">{topic.description}</p>
-              </div>
-            ))}
-          </div>
-
-          <h3 className="font-semibold text-gray-900 mb-4 mt-6">Suggested Connections</h3>
-          <div className="space-y-3">
-            {suggestedUsers?.map((user) => (
-              <div key={user.id} className="flex items-center space-x-3 p-3 bg-white rounded-lg hover:shadow-sm transition-shadow">
-                <img 
-                  src={user.avatar || `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop&crop=face`}
-                  alt={user.username}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 truncate">{user.username}</p>
-                  <p className="text-sm text-gray-500 truncate">{user.role}</p>
-                </div>
-                <Button size="sm" className="bg-green-500 hover:bg-green-600">
-                  Follow
+                <Button variant="ghost" size="sm">
+                  <Bookmark className="h-4 w-4" />
                 </Button>
               </div>
-            ))}
-          </div>
+
+              {/* Post Content */}
+              <div className="px-4 pb-3">
+                {post.title && (
+                  <h3 className="font-semibold text-gray-900 mb-2">{post.title}</h3>
+                )}
+                <p className="text-gray-700 mb-3">{post.content}</p>
+                
+                {post.tags && post.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {post.tags.map((tag: string, index: number) => (
+                      <span 
+                        key={index}
+                        className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium cursor-pointer hover:bg-blue-200"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Media Content */}
+              {post.imageUrl && (
+                <div className="relative">
+                  <img 
+                    src={post.imageUrl}
+                    alt="Post content"
+                    className="w-full h-64 md:h-80 object-cover"
+                  />
+                </div>
+              )}
+
+              {post.videoUrl && (
+                <div className="relative bg-black">
+                  <video 
+                    src={post.videoUrl}
+                    className="w-full h-64 md:h-80 object-cover"
+                    controls
+                    poster={post.imageUrl}
+                  />
+                </div>
+              )}
+
+              {/* Post Actions */}
+              <div className="p-4 border-t">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-6">
+                    <button 
+                      className="flex items-center space-x-2 text-gray-600 hover:text-red-600 transition-colors"
+                      onClick={() => likePostMutation.mutate(post.id)}
+                    >
+                      <Heart className="h-5 w-5" />
+                      <span className="text-sm">{post.likes || 0}</span>
+                    </button>
+                    <button className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors">
+                      <MessageCircle className="h-5 w-5" />
+                      <span className="text-sm">{post.comments || 0}</span>
+                    </button>
+                    <button className="flex items-center space-x-2 text-gray-600 hover:text-green-600 transition-colors">
+                      <Share className="h-5 w-5" />
+                      <span className="text-sm">{post.shares || 0}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )) : (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Camera className="h-8 w-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts found</h3>
+              <p className="text-gray-600 mb-4">Be the first to share something amazing!</p>
+              <Button onClick={() => setShowNewPostDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Post
+              </Button>
+            </div>
+          )}
         </div>
-      </div>
-    </section>
+      </ScrollArea>
+
+      {/* New Post Dialog */}
+      <NewPostDialog 
+        open={showNewPostDialog}
+        onOpenChange={setShowNewPostDialog}
+        currentUser={currentUser}
+        onPostCreated={() => {
+          setShowNewPostDialog(false);
+        }}
+      />
+    </div>
   );
 }

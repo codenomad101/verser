@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import EnhancedChatSection from "@/components/enhanced-chat-section";
 import CommunitiesSection from "@/components/communities-section";
+import DiscoverySection from "@/components/discovery-section";
 import EnhancedDiscovery from "@/components/enhanced-discovery";
 import ProfileSection from "@/components/profile-section";
 import NewsSidebar from "@/components/news-sidebar";
@@ -45,7 +46,7 @@ export default function Home() {
       case "communities":
         return <CommunitiesSection currentUser={currentUser} />;
       case "discovery":
-        return <EnhancedDiscovery currentUser={currentUser} />;
+        return <DiscoverySection currentUser={currentUser} />;
       case "profile":
         return <ProfileSection currentUser={currentUser} />;
       default:
