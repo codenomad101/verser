@@ -259,7 +259,7 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
               </div>
 
               <div className="space-y-4">
-                {posts?.map((post: any) => (
+                {(posts && Array.isArray(posts)) ? posts.map((post: any) => (
                   <div key={post.id} className="bg-white rounded-xl p-4 shadow-sm hover-lift">
                     <div className="flex items-start space-x-3 mb-3">
                       <img 
@@ -326,7 +326,11 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
                       </div>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No posts yet. Be the first to share something!
+                  </div>
+                )}
               </div>
             </ScrollArea>
 
