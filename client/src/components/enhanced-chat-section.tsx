@@ -123,8 +123,8 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
       </div>
 
       <div className="h-full flex bg-gradient-to-br from-white via-blue-50 to-purple-50">
-        {/* Conversations List - Hide on mobile when chat selected */}
-        <div className={`${selectedConversation ? 'hidden md:flex' : 'flex'} w-full md:w-80 border-r border-blue-200 flex-col bg-white/80 backdrop-blur-sm`}>
+        {/* Conversations List - Full screen on mobile, sidebar on desktop */}
+        <div className={`${selectedConversation ? 'hidden md:flex md:w-80' : 'flex w-full md:w-80'} border-r border-blue-200 flex-col bg-white/80 backdrop-blur-sm`}>
           <div className="p-4 border-b border-blue-200">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold gradient-text">Messages</h2>
@@ -194,8 +194,8 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
         </ScrollArea>
       </div>
 
-      {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      {/* Chat Area - Full screen on mobile when conversation selected */}
+      <div className={`${selectedConversation ? 'flex w-full md:flex-1' : 'hidden md:flex md:flex-1'} flex-col`}>
         {selectedConversation ? (
           <>
             {/* Chat Header */}
