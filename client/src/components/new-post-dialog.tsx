@@ -48,7 +48,11 @@ export default function NewPostDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/communities", communityId, "posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts", "trending"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser.id, "posts"] });
+      if (communityId) {
+        queryClient.invalidateQueries({ queryKey: ["/api/communities", communityId, "posts"] });
+      }
       onPostCreated?.();
       onOpenChange(false);
       resetForm();

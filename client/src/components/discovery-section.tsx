@@ -321,6 +321,8 @@ export default function DiscoverySection({ currentUser }: DiscoverySectionProps)
         onOpenChange={setShowNewPostDialog}
         currentUser={currentUser}
         onPostCreated={() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser.id, "posts"] });
           setShowNewPostDialog(false);
         }}
       />

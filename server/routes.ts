@@ -423,11 +423,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/conversations', async (req: AuthenticatedRequest, res) => {
     try {
-      if (!req.user) {
-        return res.status(401).json({ message: 'Not authenticated' });
-      }
-
-      const { name, type = 'direct' } = req.body;
+      const { name, type = 'direct', userId } = req.body;
+      const conversationUserId = userId || req.user?.id;
       const conversation = await storage.createConversation({
         name: name || 'New Chat',
         type,

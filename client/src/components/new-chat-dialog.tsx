@@ -8,11 +8,13 @@ import { Search, Plus, MessageCircle } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 interface NewChatDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  currentUser: { id: number; username: string };
   onConversationCreated: (conversationId: number) => void;
 }
 
-export default function NewChatDialog({ onConversationCreated }: NewChatDialogProps) {
-  const [open, setOpen] = useState(false);
+export default function NewChatDialog({ open, onOpenChange, currentUser, onConversationCreated }: NewChatDialogProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
 
@@ -24,7 +26,8 @@ export default function NewChatDialog({ onConversationCreated }: NewChatDialogPr
     mutationFn: async (userData: { name: string; userId: number }) => {
       return apiRequest("POST", "/api/conversations", {
         name: `Chat with ${userData.name}`,
-        type: "direct"
+        type: "direct",
+        userId: currentUser.id
       });
     },
     onSuccess: (conversation) => {
