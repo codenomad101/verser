@@ -187,11 +187,19 @@ export default function SimpleChat({ currentUser, lastMessage, sendMessage }: Si
                     </Button>
                     <Avatar className="h-10 w-10">
                       <AvatarFallback className="bg-gradient-to-r from-green-500 to-blue-500 text-white">
-                        {getConversationName(conversations.find((c: any) => c.id === selectedConversation))[0]?.toUpperCase()}
+                        {(() => {
+                          const conversation = conversations.find((c: any) => c.id === selectedConversation);
+                          return conversation ? getConversationName(conversation)[0]?.toUpperCase() : "?";
+                        })()}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <h3 className="font-semibold">{getConversationName(conversations.find((c: any) => c.id === selectedConversation))}</h3>
+                      <h3 className="font-semibold">
+                        {(() => {
+                          const conversation = conversations.find((c: any) => c.id === selectedConversation);
+                          return conversation ? getConversationName(conversation) : "Loading...";
+                        })()}
+                      </h3>
                       <p className="text-sm text-gray-600">Online</p>
                     </div>
                   </div>
