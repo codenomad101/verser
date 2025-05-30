@@ -9,6 +9,7 @@ import { Send, Smile, Paperclip, Phone, Video, MoreVertical, Search, Hash } from
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
+import NewChatDialog from "@/components/new-chat-dialog";
 
 interface ChatSectionProps {
   currentUser: { id: number; username: string };
@@ -127,9 +128,7 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
           <div className="p-4 border-b border-blue-200">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold gradient-text">Messages</h2>
-              <Button size="sm" className="modern-button text-white border-0">
-                New Chat
-              </Button>
+              <NewChatDialog onConversationCreated={setSelectedConversation} />
             </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
