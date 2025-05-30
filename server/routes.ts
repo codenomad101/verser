@@ -478,10 +478,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Communities
   app.get('/api/communities', async (req, res) => {
     try {
-      const communities = await storage.getAllCommunities();
+      let communities = await storage.getAllCommunities();
+      
+      // If no communities exist, create some sample ones
+      if (communities.length === 0) {
+        const sampleCommunities = [
+          {
+            name: "Tech Innovators",
+            description: "Discussing cutting-edge technology and innovation",
+            icon: "💻",
+            color: "#3B82F6",
+            memberCount: 15420,
+            onlineCount: 342
+          },
+          {
+            name: "Creative Minds",
+            description: "A space for designers, artists, and creative professionals",
+            icon: "🎨",
+            color: "#8B5CF6",
+            memberCount: 8750,
+            onlineCount: 156
+          },
+          {
+            name: "Startup Hub",
+            description: "Entrepreneurs sharing insights and building connections",
+            icon: "🚀",
+            color: "#10B981",
+            memberCount: 12300,
+            onlineCount: 234
+          },
+          {
+            name: "Photography",
+            description: "Capturing moments and sharing visual stories",
+            icon: "📸",
+            color: "#F59E0B",
+            memberCount: 9870,
+            onlineCount: 178
+          }
+        ];
+
+        for (const community of sampleCommunities) {
+          await storage.createCommunity(community);
+        }
+        
+        communities = await storage.getAllCommunities();
+        
+        // Add sample posts to communities
+        const samplePosts = [
+          {
+            userId: 1,
+            communityId: 1,
+            title: "The Future of AI in Web Development",
+            content: "Exploring how artificial intelligence is transforming the way we build websites and applications. From automated code generation to intelligent UX optimization, AI is reshaping our industry.",
+            imageUrl: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=300&fit=crop",
+            tags: ["AI", "WebDev", "Technology"]
+          },
+          {
+            userId: 1,
+            communityId: 2,
+            title: "Minimalist Design Principles for 2024",
+            content: "Less is more. Discover the key principles of minimalist design that are driving user engagement and creating memorable digital experiences.",
+            imageUrl: "https://images.unsplash.com/photo-1586717791821-3f44a563fa4c?w=600&h=300&fit=crop",
+            tags: ["Design", "Minimalism", "UX"]
+          },
+          {
+            userId: 1,
+            communityId: 3,
+            title: "Building a Startup: Lessons from Year One",
+            content: "Sharing insights from our first year as founders. The challenges, victories, and everything in between. What we wish we knew before starting.",
+            imageUrl: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=600&h=300&fit=crop",
+            tags: ["Startup", "Entrepreneurship", "Business"]
+          },
+          {
+            userId: 1,
+            communityId: 4,
+            title: "Street Photography Tips for Beginners",
+            content: "Capturing authentic moments in urban environments. Essential techniques for composition, lighting, and storytelling through street photography.",
+            imageUrl: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600&h=300&fit=crop",
+            tags: ["Photography", "Street", "Tips"]
+          }
+        ];
+
+        for (const post of samplePosts) {
+          await storage.createPost(post);
+        }
+      }
+      
       res.json(communities);
     } catch (error) {
       res.status(500).json({ message: 'Failed to fetch communities' });
+    }
+  });
+
+  app.post('/api/communities', async (req, res) => {
+    try {
+      const community = await storage.createCommunity(req.body);
+      res.status(201).json(community);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to create community' });
+    }
+  });
+
+  app.get('/api/communities/:id/posts', async (req, res) => {
+    try {
+      const communityId = parseInt(req.params.id);
+      const posts = await storage.getPostsByCommunity(communityId);
+      
+      // Add user info to each post
+      const postsWithUsers = await Promise.all(
+        posts.map(async (post) => {
+          const user = await storage.getUser(post.userId);
+          const { password, ...userWithoutPassword } = user || {};
+          return { ...post, user: userWithoutPassword };
+        })
+      );
+      
+      res.json(postsWithUsers);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch community posts' });
     }
   });
 

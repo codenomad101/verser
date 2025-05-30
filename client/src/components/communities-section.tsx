@@ -24,6 +24,7 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
 
   const { data: posts } = useQuery({
     queryKey: ["/api/communities", activeCommunity, "posts"],
+    queryFn: () => fetch(`/api/communities/${activeCommunity}/posts`).then(res => res.json()),
     enabled: !!activeCommunity,
   });
 
