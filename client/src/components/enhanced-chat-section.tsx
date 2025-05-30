@@ -40,6 +40,7 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
   const { data: messages = [] } = useQuery({
     queryKey: ["/api/conversations", selectedConversation, "messages"],
     enabled: !!selectedConversation,
+    select: (data) => Array.isArray(data) ? data : [],
   });
 
   const { data: users = [] } = useQuery({
@@ -274,9 +275,7 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
             {/* Messages */}
             <ScrollArea className="flex-1 p-4">
               <div className="space-y-4">
-                {messages
-                  .filter((m: any) => m.conversationId === selectedConversation)
-                  .map((message: any) => {
+                {messages.map((message: any) => {
                     const isOwn = message.userId === currentUser.id;
                     const sender = users.find((u: any) => u.id === message.userId);
                     
