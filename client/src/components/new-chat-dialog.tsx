@@ -20,15 +20,17 @@ export default function NewChatDialog({ open, onOpenChange, currentUser, onConve
 
   const { data: users = [] } = useQuery({
     queryKey: ["/api/users"],
+    select: (data) => Array.isArray(data) ? data : [],
   });
 
   const createConversationMutation = useMutation({
     mutationFn: async (userData: { name: string; userId: number }) => {
-      return apiRequest("POST", "/api/conversations", {
+      const response = await apiRequest("POST", "/api/conversations", {
         name: `Chat with ${userData.name}`,
         type: "direct",
         userId: currentUser.id
       });
+      return response.json();
     },
     onSuccess: (conversation) => {
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
@@ -52,12 +54,6 @@ export default function NewChatDialog({ open, onOpenChange, currentUser, onConve
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button className="w-full mb-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
-          <Plus className="h-4 w-4 mr-2" />
-          New Chat
-        </Button>
-      </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

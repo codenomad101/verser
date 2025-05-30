@@ -147,8 +147,20 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
           <div className="p-4 border-b border-blue-200">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold gradient-text">Messages</h2>
-              <NewChatDialog onConversationCreated={setSelectedConversation} />
+              <Button 
+                onClick={() => setShowNewChatDialog(true)}
+                className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Chat
+              </Button>
             </div>
+            <NewChatDialog 
+              open={showNewChatDialog}
+              onOpenChange={setShowNewChatDialog}
+              currentUser={currentUser}
+              onConversationCreated={setSelectedConversation}
+            />
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
