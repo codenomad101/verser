@@ -38,7 +38,7 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
   });
 
   const { data: messages = [] } = useQuery({
-    queryKey: ["/api/messages", selectedConversation],
+    queryKey: ["/api/conversations", selectedConversation, "messages"],
     enabled: !!selectedConversation,
   });
 
@@ -51,7 +51,7 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
       return apiRequest("POST", "/api/messages", messageData);
     },
     onSuccess: (newMessage) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/messages", selectedConversation] });
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations", selectedConversation, "messages"] });
       sendMessage(newMessage);
       setMessageText("");
     },
@@ -67,7 +67,7 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
 
   useEffect(() => {
     if (lastMessage && lastMessage.conversationId === selectedConversation) {
-      queryClient.invalidateQueries({ queryKey: ["/api/messages", selectedConversation] });
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations", selectedConversation, "messages"] });
     }
   }, [lastMessage, selectedConversation, queryClient]);
 
