@@ -72,8 +72,8 @@ export default function Home() {
       />
       
       <div className="flex h-full">
-        {/* Left Sidebar - News Only */}
-        <div className="hidden lg:flex flex-col">
+        {/* Left Sidebar - Auto-hide on mobile */}
+        <div className="hidden xl:flex flex-col">
           <NewsSidebar 
             activeSection={activeSection} 
             onSectionChange={handleSectionChange}

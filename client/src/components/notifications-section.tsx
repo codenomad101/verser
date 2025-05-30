@@ -20,6 +20,7 @@ export default function NotificationsSection() {
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
     refetchInterval: 30000, // Refresh every 30 seconds
+    retry: false, // Don't retry on auth failures
   });
 
   const unreadCount = notifications.filter(n => !n.read).length;

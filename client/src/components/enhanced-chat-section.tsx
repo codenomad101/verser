@@ -123,8 +123,8 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
       </div>
 
       <div className="h-full flex bg-gradient-to-br from-white via-blue-50 to-purple-50">
-        {/* Conversations List */}
-        <div className="w-80 border-r border-blue-200 flex flex-col bg-white/80 backdrop-blur-sm">
+        {/* Conversations List - Hide on mobile when chat selected */}
+        <div className={`${selectedConversation ? 'hidden md:flex' : 'flex'} w-full md:w-80 border-r border-blue-200 flex-col bg-white/80 backdrop-blur-sm`}>
           <div className="p-4 border-b border-blue-200">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold gradient-text">Messages</h2>
@@ -202,6 +202,15 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
             <div className="p-4 border-b bg-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
+                  {/* Back button for mobile */}
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    className="md:hidden"
+                    onClick={() => setSelectedConversation(null)}
+                  >
+                    ←
+                  </Button>
                   <Avatar className="h-10 w-10">
                     <AvatarFallback className="bg-gradient-to-r from-green-500 to-blue-500 text-white">
                       {getConversationName(selectedConv)[0]?.toUpperCase()}

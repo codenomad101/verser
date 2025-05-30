@@ -346,7 +346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Notifications
-  app.get('/api/notifications', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/notifications', async (req: AuthenticatedRequest, res) => {
     try {
       // Return sample notifications for now
       const notifications = [
@@ -421,7 +421,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/conversations', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  app.post('/api/conversations', async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) {
         return res.status(401).json({ message: 'Not authenticated' });
