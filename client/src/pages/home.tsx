@@ -19,199 +19,144 @@ import type { User, Community, Post } from "@shared/schema";
 type Section = "chat" | "communities" | "discovery" | "profile" | "verserpay" | "food" | "travel" | "settings";
 
 export default function Home() {
-  const { user } = useAuth();
+  const { user, logoutMutation } = useAuth();
   const [activeSection, setActiveSection] = useState<Section>("discovery");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const notificationsRef = useRef<HTMLDivElement>(null);
+  const [lastMessage, setLastMessage] = useState<any>(null);
+
   const searchRef = useRef<HTMLDivElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  // Initialize WebSocket connection
-  const { sendMessage, lastMessage, connectionStatus } = useWebSocket();
+  // WebSocket integration
+  const { socket, isConnected } = useWebSocket('ws://localhost:5000');
 
-  // Fetch data for search
-  const { data: users = [] } = useQuery<User[]>({ queryKey: ['/api/users'] });
-  const { data: communities = [] } = useQuery<Community[]>({ queryKey: ['/api/communities'] });
-  const { data: posts = [] } = useQuery<Post[]>({ queryKey: ['/api/posts'] });
-
-  useEffect(() => {
-    if (connectionStatus === 'connected' && user) {
-      sendMessage({
-        type: 'join',
-        userId: user.id
-      });
+  const sendMessage = (message: any) => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify(message));
     }
-  }, [connectionStatus, sendMessage, user]);
+  };
+
+  // Fetch data for search functionality
+  const { data: users = [] } = useQuery<User[]>({ queryKey: ["/api/users"] });
+  const { data: communities = [] } = useQuery<Community[]>({ queryKey: ["/api/communities"] });
+  const { data: posts = [] } = useQuery<Post[]>({ queryKey: ["/api/posts"] });
 
   // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
-        setShowNotifications(false);
-      }
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSearchResults(false);
+      }
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
       }
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setShowProfileMenu(false);
       }
     }
 
-    if (showNotifications || showSearchResults || showProfileMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showNotifications, showSearchResults, showProfileMenu]);
+  }, []);
 
-  // Generate comprehensive search results from website data
+  // Handle WebSocket messages
+  useEffect(() => {
+    if (socket) {
+      socket.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        setLastMessage(message);
+      };
+    }
+  }, [socket]);
+
+  // Search functionality
   const getSearchResults = (query: string) => {
     if (!query.trim()) return [];
     
-    const lowerQuery = query.toLowerCase();
-    const results = [];
+    const searchTerm = query.toLowerCase();
+    const results: any[] = [];
 
     // Search users
-    const matchingUsers = users.filter((user) => 
-      user.username?.toLowerCase().includes(lowerQuery) ||
-      user.email?.toLowerCase().includes(lowerQuery) ||
-      user.bio?.toLowerCase().includes(lowerQuery)
-    );
-
-    matchingUsers.slice(0, 3).forEach((user) => {
-      results.push({
-        type: 'user',
-        icon: user.avatar || '👤',
-        title: `@${user.username}`,
-        description: user.bio || user.email,
-        action: () => {
-          handleSectionChange('chat');
-        }
-      });
+    users.forEach(user => {
+      if (user.username.toLowerCase().includes(searchTerm) || 
+          user.email.toLowerCase().includes(searchTerm)) {
+        results.push({
+          type: 'user',
+          title: user.username,
+          description: user.bio || user.email,
+          icon: user.avatar || "👤",
+          action: () => handleSectionChange('communities')
+        });
+      }
     });
 
     // Search communities
-    const matchingCommunities = communities.filter((community) =>
-      community.name?.toLowerCase().includes(lowerQuery) ||
-      community.description?.toLowerCase().includes(lowerQuery)
-    );
-
-    matchingCommunities.slice(0, 3).forEach((community) => {
-      results.push({
-        type: 'community',
-        icon: community.icon || '👥',
-        title: community.name,
-        description: `${community.memberCount} members • ${community.description || 'No description'}`,
-        action: () => handleSectionChange('communities')
-      });
+    communities.forEach(community => {
+      if (community.name.toLowerCase().includes(searchTerm) || 
+          (community.description && community.description.toLowerCase().includes(searchTerm))) {
+        results.push({
+          type: 'community',
+          title: community.name,
+          description: community.description || `${community.memberCount} members`,
+          icon: community.icon || "👥",
+          action: () => handleSectionChange('communities')
+        });
+      }
     });
 
     // Search posts
-    const matchingPosts = posts.filter((post) =>
-      post.title?.toLowerCase().includes(lowerQuery) ||
-      post.content?.toLowerCase().includes(lowerQuery) ||
-      post.tags?.some((tag: string) => tag.toLowerCase().includes(lowerQuery))
-    );
-
-    matchingPosts.slice(0, 2).forEach((post) => {
-      results.push({
-        type: 'post',
-        icon: '📝',
-        title: post.title || 'Post',
-        description: post.content?.substring(0, 100) + (post.content && post.content.length > 100 ? '...' : ''),
-        action: () => handleSectionChange('discovery')
-      });
+    posts.forEach(post => {
+      if (post.title?.toLowerCase().includes(searchTerm) || 
+          post.content.toLowerCase().includes(searchTerm)) {
+        results.push({
+          type: 'post',
+          title: post.title || 'Post',
+          description: post.content.substring(0, 100) + '...',
+          icon: "📝",
+          action: () => handleSectionChange('discovery')
+        });
+      }
     });
 
-    // Food items (mock data for demonstration)
-    const foodItems = [
-      { name: 'Pizza Margherita', restaurant: 'Mario\'s Kitchen', price: '$12.99' },
-      { name: 'Chicken Burger', restaurant: 'Fast Bites', price: '$8.99' },
-      { name: 'Pasta Carbonara', restaurant: 'Italian Corner', price: '$14.99' },
-      { name: 'Sushi Roll', restaurant: 'Tokyo Express', price: '$16.99' },
-      { name: 'Caesar Salad', restaurant: 'Green Garden', price: '$9.99' }
-    ];
-
-    const matchingFood = foodItems.filter(item =>
-      item.name.toLowerCase().includes(lowerQuery) ||
-      item.restaurant.toLowerCase().includes(lowerQuery)
-    );
-
-    matchingFood.slice(0, 2).forEach(food => {
+    // Add context-aware suggestions
+    if (searchTerm.includes('food') || searchTerm.includes('order') || searchTerm.includes('restaurant')) {
       results.push({
-        type: 'food',
-        icon: '🍽️',
-        title: food.name,
-        description: `${food.restaurant} • ${food.price}`,
+        type: 'feature',
+        title: 'Order Food',
+        description: 'Browse restaurants and order your favorite meals',
+        icon: "🍽️",
         action: () => handleSectionChange('food')
       });
-    });
-
-    // VerserPay features
-    const paymentFeatures = [
-      { name: 'Send Money', description: 'Transfer money to friends and family' },
-      { name: 'Pay Bills', description: 'Pay utility bills and subscriptions' },
-      { name: 'Wallet Balance', description: 'Check your current wallet balance' },
-      { name: 'Transaction History', description: 'View your payment history' },
-      { name: 'QR Payment', description: 'Scan QR codes to make payments' }
-    ];
-
-    const matchingPayment = paymentFeatures.filter(feature =>
-      feature.name.toLowerCase().includes(lowerQuery) ||
-      feature.description.toLowerCase().includes(lowerQuery)
-    );
-
-    matchingPayment.slice(0, 2).forEach(payment => {
-      results.push({
-        type: 'payment',
-        icon: '💳',
-        title: payment.name,
-        description: payment.description,
-        action: () => handleSectionChange('verserpay')
-      });
-    });
-
-    // Travel booking options
-    const travelOptions = [
-      { name: 'Bus Tickets', description: 'Book bus tickets for intercity travel' },
-      { name: 'Train Reservations', description: 'Reserve train seats and berths' },
-      { name: 'Hotel Booking', description: 'Find and book hotels worldwide' },
-      { name: 'Flight Search', description: 'Search and compare flight prices' }
-    ];
-
-    const matchingTravel = travelOptions.filter(option =>
-      option.name.toLowerCase().includes(lowerQuery) ||
-      option.description.toLowerCase().includes(lowerQuery) ||
-      lowerQuery.includes('book') || lowerQuery.includes('ticket') || lowerQuery.includes('travel')
-    );
-
-    matchingTravel.slice(0, 2).forEach(travel => {
-      results.push({
-        type: 'travel',
-        icon: '✈️',
-        title: travel.name,
-        description: travel.description,
-        action: () => handleSectionChange('travel')
-      });
-    });
-
-    // General navigation if no specific matches
-    if (results.length === 0) {
-      const generalOptions = [
-        { type: 'general', icon: '🧭', title: 'Explore Discovery', description: 'Browse trending posts and content', action: () => handleSectionChange('discovery') },
-        { type: 'general', icon: '👥', title: 'Communities', description: 'Join and explore communities', action: () => handleSectionChange('communities') },
-        { type: 'general', icon: '💬', title: 'Chat', description: 'Start conversations and messaging', action: () => handleSectionChange('chat') }
-      ];
-      results.push(...generalOptions);
     }
 
-    return results.slice(0, 8); // Limit total results
+    if (searchTerm.includes('travel') || searchTerm.includes('book') || searchTerm.includes('ticket') || searchTerm.includes('hotel')) {
+      results.push({
+        type: 'feature',
+        title: 'Book Travel',
+        description: 'Find and book buses, trains, and hotels',
+        icon: "✈️",
+        action: () => handleSectionChange('travel')
+      });
+    }
+
+    if (searchTerm.includes('pay') || searchTerm.includes('money') || searchTerm.includes('transfer')) {
+      results.push({
+        type: 'feature',
+        title: 'VerserPay',
+        description: 'Send money, pay bills, and manage finances',
+        icon: "💳",
+        action: () => handleSectionChange('verserpay')
+      });
+    }
+
+    return results.slice(0, 8); // Limit to 8 results
   };
 
   const handleSearch = (query: string) => {
@@ -220,8 +165,6 @@ export default function Home() {
   };
 
   // Use auth context for logout
-  const { logoutMutation } = useAuth();
-
   const handleLogout = () => {
     setShowProfileMenu(false);
     logoutMutation.mutate();
@@ -420,124 +363,9 @@ export default function Home() {
               </div>
             </div>
 
-          {/* Search Bar */}
-          <div className="flex-1 max-w-md mx-4" ref={searchRef}>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search Verser..."
-                value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-                onFocus={() => searchQuery.length > 0 && setShowSearchResults(true)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              
-              {/* Search Results Dropdown */}
-              {showSearchResults && searchQuery.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
-                  <div className="p-2">
-                    {getSearchResults(searchQuery).map((result, index) => (
-                      <button
-                        key={index}
-                        onClick={() => {
-                          result.action();
-                          setShowSearchResults(false);
-                          setSearchQuery("");
-                        }}
-                        className="w-full flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg text-left transition-colors"
-                      >
-                        <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
-                          {typeof result.icon === 'string' && result.icon.startsWith('http') ? (
-                            <img src={result.icon} alt="" className="w-6 h-6 rounded-full object-cover" />
-                          ) : (
-                            <span className="text-lg">{result.icon}</span>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-gray-900 truncate">{result.title}</h4>
-                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">{result.description}</p>
-                          {result.type !== 'general' && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 mt-1">
-                              {result.type}
-                            </span>
-                          )}
-                        </div>
-                        <svg className="w-5 h-5 text-gray-400 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
-                    ))}
-                    {getSearchResults(searchQuery).length === 0 && (
-                      <div className="p-4 text-center text-gray-500">
-                        <p>No results found for "{searchQuery}"</p>
-                        <p className="text-sm mt-1">Try searching for users, communities, food, or "book tickets"</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Notifications and Profile */}
-          <div className="flex items-center space-x-3">
-            {/* Notifications */}
-            <div className="relative" ref={notificationsRef}>
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors relative"
-              >
-                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zm-3.054-8.764A7.012 7.012 0 0012 6c-1.194 0-2.315.298-3.298.826m-.548 6.938a7.003 7.003 0 01-2.32-4.612A2.995 2.995 0 006 12v.01M15 17v3a2 2 0 01-2 2H9a2 2 0 01-2-2v-3m8 0V9a6 6 0 10-12 0v8" />
-                </svg>
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">3</span>
-              </button>
-              
-              {/* Notifications Dropdown */}
-              {showNotifications && (
-                <div className="absolute right-0 top-12 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-3">Notifications</h3>
-                    <div className="space-y-3">
-                      <div className="flex items-start space-x-3 p-2 hover:bg-gray-50 rounded-lg">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                        <div>
-                          <p className="text-sm text-gray-800">Alex Johnson liked your post</p>
-                          <p className="text-xs text-gray-500">2 minutes ago</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start space-x-3 p-2 hover:bg-gray-50 rounded-lg">
-                        <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                        <div>
-                          <p className="text-sm text-gray-800">New message in Tech Innovators</p>
-                          <p className="text-xs text-gray-500">5 minutes ago</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start space-x-3 p-2 hover:bg-gray-50 rounded-lg">
-                        <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
-                        <div>
-                          <p className="text-sm text-gray-800">Sarah Chen commented on your photo</p>
-                          <p className="text-xs text-gray-500">1 hour ago</p>
-                        </div>
-                      </div>
-                    </div>
-                    <button className="w-full mt-3 text-sm text-blue-600 hover:text-blue-800 transition-colors">
-                      View all notifications
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Profile */}
+            {/* Profile Icon on Mobile */}
             <div className="relative" ref={profileRef}>
               <button
-                onMouseEnter={() => setShowProfileMenu(true)}
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
                 className="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-100 transition-colors"
               >
@@ -546,38 +374,16 @@ export default function Home() {
                   alt={user.username}
                   className="w-8 h-8 rounded-full object-cover"
                 />
-                <span className="text-sm font-medium text-gray-700 hidden sm:block">
-                  {user?.username || 'User'}
-                </span>
-                <svg className="w-4 h-4 text-gray-500 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
               </button>
 
-              {/* Profile Dropdown Menu */}
+              {/* Mobile Profile Dropdown Menu */}
               {showProfileMenu && (
-                <div 
-                  className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
-                  onMouseLeave={() => setShowProfileMenu(false)}
-                >
+                <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                   <div className="py-2">
                     <button
                       onClick={() => {
                         setShowProfileMenu(false);
-                        handleSectionChange('profile');
-                      }}
-                      className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      <svg className="w-4 h-4 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                      Profile
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowProfileMenu(false);
-                        // Handle settings navigation here
-                        console.log('Settings clicked');
+                        handleSectionChange('settings');
                       }}
                       className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                     >
@@ -601,53 +407,6 @@ export default function Home() {
                   </div>
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Overlay for mobile sidebar */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        ></div>
-      )}
-
-      {/* Left Sidebar - Auto-hide */}
-      <div className={`fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out z-40 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <div className="p-4 space-y-2">
-          {[
-            { id: "chat", icon: "💬", label: "Chat", notifications: 3 },
-            { id: "communities", icon: "👥", label: "Communities", notifications: 0 },
-            { id: "discovery", icon: "🧭", label: "Discovery", notifications: 0 },
-            { id: "verserpay", icon: "💳", label: "VerserPay", notifications: 0 },
-            { id: "food", icon: "🍽️", label: "Food", notifications: 0 },
-            { id: "travel", icon: "✈️", label: "Travel", notifications: 0 },
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => handleSectionChange(item.id)}
-              className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                activeSection === item.id
-                  ? "bg-blue-100 text-blue-700 border border-blue-200"
-                  : "hover:bg-gray-100 text-gray-700"
-              }`}
-            >
-              <span className="text-xl">{item.icon}</span>
-              <span className="font-medium">{item.label}</span>
-              {item.notifications > 0 && (
-                <span className="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                  {item.notifications}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-
             </div>
           </div>
         </div>
