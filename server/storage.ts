@@ -187,6 +187,19 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values());
   }
 
+  async updateUserSettings(id: number, settings: Partial<User>): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+    
+    const updatedUser = { ...user, ...settings };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async getUserPosts(userId: number): Promise<Post[]> {
+    return Array.from(this.posts.values()).filter(post => post.userId === userId);
+  }
+
   // Conversation methods
   async getConversation(id: number): Promise<Conversation | undefined> {
     return this.conversations.get(id);

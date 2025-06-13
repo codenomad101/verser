@@ -85,15 +85,15 @@ export default function SimpleChat({ currentUser, lastMessage, sendMessage }: Si
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white p-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-8 w-8 border-2 border-white/30">
+      <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white p-3 sm:p-4 flex items-center justify-between">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-white/30">
             <AvatarFallback className="bg-white/20 text-white text-sm font-semibold">
               {currentUser.username.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div>
-            <h3 className="font-semibold text-sm">{currentUser.username}</h3>
+            <h3 className="font-semibold text-sm sm:text-base">{currentUser.username}</h3>
             <p className="text-xs text-blue-100">Chat Messages</p>
           </div>
         </div>

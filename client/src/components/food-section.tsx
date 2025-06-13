@@ -156,8 +156,8 @@ export default function FoodSection({ currentUser }: FoodSectionProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Food Delivery</h1>
-          <p className="text-gray-600">Order your favorite meals</p>
+          <h1 className="text-xl sm:text-2xl font-bold">Food Delivery</h1>
+          <p className="text-gray-600 text-sm sm:text-base">Order your favorite meals</p>
         </div>
         <div className="relative">
           <Button className="relative">
@@ -195,7 +195,7 @@ export default function FoodSection({ currentUser }: FoodSectionProps) {
 
         <TabsContent value="menu" className="space-y-4">
           {/* Menu Items */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {filteredItems.map(item => {
               const quantity = getItemQuantity(item.id);
               return (
@@ -219,10 +219,10 @@ export default function FoodSection({ currentUser }: FoodSectionProps) {
                     </div>
                   </div>
                   
-                  <CardContent className="p-4">
+                  <CardContent className="p-3 sm:p-4">
                     <div className="space-y-2">
-                      <h3 className="font-semibold text-lg">{item.name}</h3>
-                      <p className="text-gray-600 text-sm">{item.description}</p>
+                      <h3 className="font-semibold text-base sm:text-lg">{item.name}</h3>
+                      <p className="text-gray-600 text-xs sm:text-sm">{item.description}</p>
                       
                       <div className="flex items-center space-x-4 text-sm text-gray-500">
                         <div className="flex items-center space-x-1">
