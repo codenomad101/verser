@@ -13,6 +13,7 @@ import FoodSection from "@/components/food-section";
 import TravelSection from "@/components/travel-section";
 import { useWebSocket } from "@/lib/websocket";
 import { useQuery } from "@tanstack/react-query";
+import type { User, Community, Post } from "@shared/schema";
 
 type Section = "chat" | "communities" | "discovery" | "profile" | "verserpay" | "food" | "travel";
 
@@ -30,9 +31,9 @@ export default function Home() {
   const { sendMessage, lastMessage, connectionStatus } = useWebSocket();
 
   // Fetch data for search
-  const { data: users = [] } = useQuery({ queryKey: ['/api/users'] });
-  const { data: communities = [] } = useQuery({ queryKey: ['/api/communities'] });
-  const { data: posts = [] } = useQuery({ queryKey: ['/api/posts'] });
+  const { data: users = [] } = useQuery<User[]>({ queryKey: ['/api/users'] });
+  const { data: communities = [] } = useQuery<Community[]>({ queryKey: ['/api/communities'] });
+  const { data: posts = [] } = useQuery<Post[]>({ queryKey: ['/api/posts'] });
 
   useEffect(() => {
     if (connectionStatus === 'connected' && user) {
@@ -71,13 +72,13 @@ export default function Home() {
     const results = [];
 
     // Search users
-    const matchingUsers = users.filter((user: any) => 
+    const matchingUsers = users.filter((user) => 
       user.username?.toLowerCase().includes(lowerQuery) ||
       user.email?.toLowerCase().includes(lowerQuery) ||
       user.bio?.toLowerCase().includes(lowerQuery)
     );
 
-    matchingUsers.slice(0, 3).forEach((user: any) => {
+    matchingUsers.slice(0, 3).forEach((user) => {
       results.push({
         type: 'user',
         icon: user.avatar || '👤',
@@ -85,40 +86,39 @@ export default function Home() {
         description: user.bio || user.email,
         action: () => {
           handleSectionChange('chat');
-          // Could add user profile navigation here
         }
       });
     });
 
     // Search communities
-    const matchingCommunities = communities.filter((community: any) =>
+    const matchingCommunities = communities.filter((community) =>
       community.name?.toLowerCase().includes(lowerQuery) ||
       community.description?.toLowerCase().includes(lowerQuery)
     );
 
-    matchingCommunities.slice(0, 3).forEach((community: any) => {
+    matchingCommunities.slice(0, 3).forEach((community) => {
       results.push({
         type: 'community',
         icon: community.icon || '👥',
         title: community.name,
-        description: `${community.memberCount} members • ${community.description}`,
+        description: `${community.memberCount} members • ${community.description || 'No description'}`,
         action: () => handleSectionChange('communities')
       });
     });
 
     // Search posts
-    const matchingPosts = posts.filter((post: any) =>
+    const matchingPosts = posts.filter((post) =>
       post.title?.toLowerCase().includes(lowerQuery) ||
       post.content?.toLowerCase().includes(lowerQuery) ||
       post.tags?.some((tag: string) => tag.toLowerCase().includes(lowerQuery))
     );
 
-    matchingPosts.slice(0, 2).forEach((post: any) => {
+    matchingPosts.slice(0, 2).forEach((post) => {
       results.push({
         type: 'post',
         icon: '📝',
         title: post.title || 'Post',
-        description: post.content?.substring(0, 100) + (post.content?.length > 100 ? '...' : ''),
+        description: post.content?.substring(0, 100) + (post.content && post.content.length > 100 ? '...' : ''),
         action: () => handleSectionChange('discovery')
       });
     });
