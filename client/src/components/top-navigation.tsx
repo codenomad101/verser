@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageSquare, Users, Compass, User, Search, CreditCard, UtensilsCrossed } from "lucide-react";
+import { MessageSquare, Users, Compass, User, Search, CreditCard, UtensilsCrossed, Plane } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
@@ -22,6 +22,7 @@ export default function TopNavigation({ activeSection, onSectionChange }: TopNav
     { id: "discovery", icon: Compass, label: "Discovery", notifications: 0 },
     { id: "verserpay", icon: CreditCard, label: "VerserPay", notifications: 0 },
     { id: "food", icon: UtensilsCrossed, label: "Food", notifications: 0 },
+    { id: "travel", icon: Plane, label: "Travel", notifications: 0 },
   ];
 
   const { data: searchResults } = useQuery({
