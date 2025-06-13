@@ -35,24 +35,25 @@ export default function VerserPaySection({ currentUser }: VerserPaySectionProps)
   };
 
   return (
-    <div className="h-full overflow-auto p-4 space-y-6">
+    <div className="h-full overflow-auto p-2 sm:p-4 space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">VerserPay</h1>
-        <Button variant="outline" size="sm">
-          <CreditCard className="w-4 h-4 mr-2" />
-          Link Card
+        <h1 className="text-xl sm:text-2xl font-bold">VerserPay</h1>
+        <Button variant="outline" size="sm" className="text-xs sm:text-sm">
+          <CreditCard className="w-4 h-4 mr-1 sm:mr-2" />
+          <span className="hidden sm:inline">Link Card</span>
+          <span className="sm:hidden">Link</span>
         </Button>
       </div>
 
       {/* Balance Card */}
       <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-blue-100 text-sm">Total Balance</p>
               <div className="flex items-center space-x-2">
-                <h2 className="text-3xl font-bold">
+                <h2 className="text-2xl sm:text-3xl font-bold">
                   {showBalance ? balance : "₹****.**"}
                 </h2>
                 <Button
@@ -72,7 +73,7 @@ export default function VerserPaySection({ currentUser }: VerserPaySectionProps)
       </Card>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
         {quickActions.map((action) => {
           const Icon = action.icon;
           return (

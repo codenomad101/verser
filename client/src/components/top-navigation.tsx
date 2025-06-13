@@ -46,7 +46,7 @@ export default function TopNavigation({ activeSection, onSectionChange }: TopNav
           </div>
 
           {/* Main Navigation */}
-          <div className="hidden md:flex items-center space-x-1 ml-8">
+          <div className="flex items-center space-x-1 ml-4 md:ml-8 overflow-x-auto">
             {navigationItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeSection === item.id;
@@ -56,11 +56,11 @@ export default function TopNavigation({ activeSection, onSectionChange }: TopNav
                   <Button
                     variant={isActive ? "default" : "ghost"}
                     onClick={() => onSectionChange(item.id)}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                    className={`flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 rounded-lg transition-all duration-200 ${
                       isActive 
                         ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md' 
                         : 'hover:bg-gray-100'
-                    }`}
+                    } whitespace-nowrap`}
                   >
                     <Icon className="h-5 w-5" />
                     <span className="font-medium">{item.label}</span>
