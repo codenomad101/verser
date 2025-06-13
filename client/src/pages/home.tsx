@@ -34,6 +34,23 @@ export default function Home() {
     }
   }, [connectionStatus, sendMessage, user]);
 
+  // Close notifications when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    }
+
+    if (showNotifications) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifications]);
+
   if (!user) {
     return null; // This should not happen due to ProtectedRoute
   }
@@ -124,7 +141,7 @@ export default function Home() {
           {/* Notifications and Profile */}
           <div className="flex items-center space-x-3">
             {/* Notifications */}
-            <div className="relative">
+            <div className="relative" ref={notificationsRef}>
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
                 className="p-2 rounded-full hover:bg-gray-100 transition-colors relative"
