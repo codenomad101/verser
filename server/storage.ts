@@ -65,7 +65,27 @@ export class MemStorage implements IStorage {
   }
 
   private initializeData() {
-    // No demo data - clean start for real user conversations
+    // Add one test user for chat testing
+    const testUser: User = {
+      id: 2,
+      username: "chat_tester",
+      email: "tester@example.com",
+      password: "password123",
+      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face",
+      bio: "Test user for chat functionality",
+      status: "online",
+      lastSeen: new Date(),
+      showLastSeen: true,
+      showOnlineStatus: true,
+      isVerified: false,
+      followersCount: 0,
+      followingCount: 0,
+      postCount: 0,
+      about: null,
+      createdAt: new Date()
+    };
+    this.users.set(2, testUser);
+    this.currentUserId = 3; // Start next user ID from 3
 
     // Create sample communities
     const sampleCommunities: InsertCommunity[] = [

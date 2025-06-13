@@ -29,7 +29,7 @@ export default function SimpleChat({ currentUser, lastMessage, sendMessage }: Si
   });
 
   const { data: messages = [] } = useQuery({
-    queryKey: ["/api/conversations", selectedConversation, "messages"],
+    queryKey: [`/api/conversations/${selectedConversation}/messages`],
     enabled: !!selectedConversation,
     select: (data) => Array.isArray(data) ? data : [],
   });
@@ -46,8 +46,8 @@ export default function SimpleChat({ currentUser, lastMessage, sendMessage }: Si
     },
     onSuccess: () => {
       // Force refresh the messages immediately
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations", selectedConversation, "messages"] });
-      queryClient.refetchQueries({ queryKey: ["/api/conversations", selectedConversation, "messages"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/conversations/${selectedConversation}/messages`] });
+      queryClient.refetchQueries({ queryKey: [`/api/conversations/${selectedConversation}/messages`] });
       setMessageText("");
     },
   });
