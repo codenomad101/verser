@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import SimpleChat from "@/components/simple-chat";
 import CommunitiesSection from "@/components/communities-section";
 import DiscoverySection from "@/components/discovery-section";
 import EnhancedDiscovery from "@/components/enhanced-discovery";
 import ProfileSection from "@/components/profile-section";
+import NotificationsSection from "@/components/notifications-section";
 
 import TopNavigation from "@/components/top-navigation";
 import VerserPaySection from "@/components/verserpay-section";
@@ -18,6 +19,8 @@ export default function Home() {
   const { user } = useAuth();
   const [activeSection, setActiveSection] = useState<Section>("discovery");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationsRef = useRef<HTMLDivElement>(null);
 
   // Initialize WebSocket connection
   const { sendMessage, lastMessage, connectionStatus } = useWebSocket();
@@ -118,12 +121,66 @@ export default function Home() {
             </div>
           </div>
 
-          {/* User Profile */}
+          {/* Notifications and Profile */}
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-            <span className="text-sm font-medium text-gray-700 hidden sm:block">
-              {user?.username || 'User'}
-            </span>
+            {/* Notifications */}
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors relative"
+              >
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zm-3.054-8.764A7.012 7.012 0 0012 6c-1.194 0-2.315.298-3.298.826m-.548 6.938a7.003 7.003 0 01-2.32-4.612A2.995 2.995 0 006 12v.01M15 17v3a2 2 0 01-2 2H9a2 2 0 01-2-2v-3m8 0V9a6 6 0 10-12 0v8" />
+                </svg>
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">3</span>
+              </button>
+              
+              {/* Notifications Dropdown */}
+              {showNotifications && (
+                <div className="absolute right-0 top-12 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-3">Notifications</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-start space-x-3 p-2 hover:bg-gray-50 rounded-lg">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                        <div>
+                          <p className="text-sm text-gray-800">Alex Johnson liked your post</p>
+                          <p className="text-xs text-gray-500">2 minutes ago</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start space-x-3 p-2 hover:bg-gray-50 rounded-lg">
+                        <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                        <div>
+                          <p className="text-sm text-gray-800">New message in Tech Innovators</p>
+                          <p className="text-xs text-gray-500">5 minutes ago</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start space-x-3 p-2 hover:bg-gray-50 rounded-lg">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
+                        <div>
+                          <p className="text-sm text-gray-800">Sarah Chen commented on your photo</p>
+                          <p className="text-xs text-gray-500">1 hour ago</p>
+                        </div>
+                      </div>
+                    </div>
+                    <button className="w-full mt-3 text-sm text-blue-600 hover:text-blue-800 transition-colors">
+                      View all notifications
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Profile */}
+            <button
+              onClick={() => handleSectionChange("profile")}
+              className="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+              <span className="text-sm font-medium text-gray-700 hidden sm:block">
+                {user?.username || 'User'}
+              </span>
+            </button>
           </div>
         </div>
       </div>
@@ -148,7 +205,6 @@ export default function Home() {
             { id: "verserpay", icon: "💳", label: "VerserPay", notifications: 0 },
             { id: "food", icon: "🍽️", label: "Food", notifications: 0 },
             { id: "travel", icon: "✈️", label: "Travel", notifications: 0 },
-            { id: "profile", icon: "👤", label: "Profile", notifications: 0 },
           ].map((item) => (
             <button
               key={item.id}
