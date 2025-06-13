@@ -246,7 +246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/auth/logout', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  app.post('/api/auth/logout', optionalAuth, async (req: AuthenticatedRequest, res) => {
     try {
       if (req.user) {
         await storage.updateUserStatus(req.user.id, 'offline');

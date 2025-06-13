@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import SimpleChat from "@/components/simple-chat";
 import CommunitiesSection from "@/components/communities-section";
 import DiscoverySection from "@/components/discovery-section";
@@ -220,18 +218,8 @@ export default function Home() {
     setShowSearchResults(query.length > 0);
   };
 
-  // Logout mutation
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      await apiRequest('POST', '/api/auth/logout');
-    },
-    onSuccess: () => {
-      window.location.reload();
-    },
-    onError: (error) => {
-      console.error('Logout failed:', error);
-    }
-  });
+  // Use auth context for logout
+  const { logoutMutation } = useAuth();
 
   const handleLogout = () => {
     setShowProfileMenu(false);
