@@ -219,7 +219,7 @@ export default function Home() {
   return (
     <div className="h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 font-inter flex">
       {/* Desktop Sidebar - Always visible on desktop */}
-      <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 lg:z-50">
+      <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 lg:z-50 lg:ml-6">
         <div className="flex-1 flex flex-col min-h-0 bg-white border-r border-gray-200">
           {/* Logo */}
           <div className="flex items-center h-16 flex-shrink-0 px-4 border-b border-gray-200">
@@ -267,9 +267,9 @@ export default function Home() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 lg:pl-64">
+      <div className="flex-1 lg:pl-72 lg:pr-6">
         {/* Desktop Top Bar */}
-        <div className="hidden lg:block fixed top-0 left-64 right-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+        <div className="hidden lg:block fixed top-0 left-72 right-6 z-40 bg-white border-b border-gray-200 shadow-sm">
           <div className="flex items-center justify-between h-16 px-6">
             {/* Search Bar */}
             <div className="flex-1 max-w-lg" ref={searchRef}>
@@ -538,7 +538,7 @@ export default function Home() {
         )}
 
         {/* Main Content */}
-        <div className="lg:pt-16 pt-16 min-h-screen lg:px-8 px-4">
+        <div className="lg:pt-16 pt-16 min-h-screen px-4">
           <div className="max-w-6xl mx-auto">
             {renderActiveSection()}
           </div>
