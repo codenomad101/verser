@@ -373,6 +373,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Posts
+  app.get('/api/posts', async (req, res) => {
+    try {
+      const posts = await storage.getAllPosts();
+      res.json(posts);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch posts' });
+    }
+  });
+
+  app.get('/api/posts/trending', async (req, res) => {
+    try {
+      const posts = await storage.getTrendingPosts();
+      res.json(posts);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch trending posts' });
+    }
+  });
+
   // Search
   app.get('/api/search', async (req, res) => {
     try {
