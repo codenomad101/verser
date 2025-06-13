@@ -107,7 +107,9 @@ Verser is a full-stack social media and communication platform built with modern
 
 ## Changelog
 - June 13, 2025. Initial setup
+- June 13, 2025. Desktop sidebar implementation with responsive layout, search bar in top navigation, centered main content with equal spacing
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Desktop layout: Always-visible sidebar on left, top navigation with search/notifications/avatar on right, centered main content with equal spacing.

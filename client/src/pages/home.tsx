@@ -538,8 +538,10 @@ export default function Home() {
         )}
 
         {/* Main Content */}
-        <div className="lg:pt-16 pt-16 min-h-screen">
-          {renderActiveSection()}
+        <div className="lg:pt-16 pt-16 min-h-screen lg:px-8 px-4">
+          <div className="max-w-6xl mx-auto">
+            {renderActiveSection()}
+          </div>
         </div>
       </div>
     </div>
