@@ -7,9 +7,11 @@ import EnhancedDiscovery from "@/components/enhanced-discovery";
 import ProfileSection from "@/components/profile-section";
 import NewsSidebar from "@/components/news-sidebar";
 import TopNavigation from "@/components/top-navigation";
+import VerserPaySection from "@/components/verserpay-section";
+import FoodSection from "@/components/food-section";
 import { useWebSocket } from "@/lib/websocket";
 
-type Section = "chat" | "communities" | "discovery" | "profile";
+type Section = "chat" | "communities" | "discovery" | "profile" | "verserpay" | "food";
 
 export default function Home() {
   const { user } = useAuth();
@@ -47,6 +49,10 @@ export default function Home() {
         return <CommunitiesSection currentUser={currentUser} />;
       case "discovery":
         return <DiscoverySection currentUser={currentUser} />;
+      case "verserpay":
+        return <VerserPaySection currentUser={currentUser} />;
+      case "food":
+        return <FoodSection currentUser={currentUser} />;
       case "profile":
         return <ProfileSection currentUser={currentUser} />;
       default:
