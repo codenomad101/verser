@@ -153,6 +153,49 @@ export default function TrendingSection() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Top News */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <TrendingUp className="h-5 w-5 text-red-500" />
+            <span>Top News</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {[
+              { title: "Tech Giants Report Strong Q4 Earnings", url: "https://techcrunch.com", source: "TechCrunch", category: "tech" },
+              { title: "AI Breakthrough in Medical Research", url: "https://news.google.com", source: "Google News", category: "tech" },
+              { title: "New Social Media Trends for 2025", url: "https://bbc.com/news", source: "BBC News", category: "social" },
+              { title: "Startup Funding Hits Record High", url: "https://reuters.com", source: "Reuters", category: "business" },
+              { title: "Climate Tech Innovation Summit", url: "https://techcrunch.com", source: "TechCrunch", category: "environment" }
+            ].map((news, index) => (
+              <a 
+                key={index}
+                href={news.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block p-3 hover:bg-gray-50 rounded-lg transition-colors border border-gray-100"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900 hover:text-blue-600 line-clamp-2">
+                      {news.title}
+                    </p>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <p className="text-xs text-gray-500">{news.source}</p>
+                      <Badge className={getCategoryColor(news.category)} variant="secondary">
+                        {news.category}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

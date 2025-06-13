@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageSquare, Users, Compass, User, Search } from "lucide-react";
+import { MessageSquare, Users, Compass, User, Search, CreditCard, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
@@ -20,6 +20,8 @@ export default function TopNavigation({ activeSection, onSectionChange }: TopNav
     { id: "chat", icon: MessageSquare, label: "Chat", notifications: 3 },
     { id: "communities", icon: Users, label: "Communities", notifications: 0 },
     { id: "discovery", icon: Compass, label: "Discovery", notifications: 0 },
+    { id: "verserpay", icon: CreditCard, label: "VerserPay", notifications: 0 },
+    { id: "food", icon: UtensilsCrossed, label: "Food", notifications: 0 },
   ];
 
   const { data: searchResults } = useQuery({
