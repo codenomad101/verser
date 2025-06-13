@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import SimpleChat from "@/components/simple-chat";
 import CommunitiesSection from "@/components/communities-section";
 import DiscoverySection from "@/components/discovery-section";
@@ -24,8 +26,10 @@ export default function Home() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   // Initialize WebSocket connection
   const { sendMessage, lastMessage, connectionStatus } = useWebSocket();
@@ -44,7 +48,7 @@ export default function Home() {
     }
   }, [connectionStatus, sendMessage, user]);
 
-  // Close notifications and search when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
@@ -53,16 +57,19 @@ export default function Home() {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSearchResults(false);
       }
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setShowProfileMenu(false);
+      }
     }
 
-    if (showNotifications || showSearchResults) {
+    if (showNotifications || showSearchResults || showProfileMenu) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showNotifications, showSearchResults]);
+  }, [showNotifications, showSearchResults, showProfileMenu]);
 
   // Generate comprehensive search results from website data
   const getSearchResults = (query: string) => {
@@ -211,6 +218,24 @@ export default function Home() {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setShowSearchResults(query.length > 0);
+  };
+
+  // Logout mutation
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest('POST', '/api/auth/logout');
+    },
+    onSuccess: () => {
+      window.location.reload();
+    },
+    onError: (error) => {
+      console.error('Logout failed:', error);
+    }
+  });
+
+  const handleLogout = () => {
+    setShowProfileMenu(false);
+    logoutMutation.mutate();
   };
 
   if (!user) {
@@ -399,15 +424,73 @@ export default function Home() {
             </div>
 
             {/* Profile */}
-            <button
-              onClick={() => handleSectionChange("profile")}
-              className="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-100 transition-colors"
-            >
-              <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-              <span className="text-sm font-medium text-gray-700 hidden sm:block">
-                {user?.username || 'User'}
-              </span>
-            </button>
+            <div className="relative" ref={profileRef}>
+              <button
+                onMouseEnter={() => setShowProfileMenu(true)}
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <img
+                  src={user.avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"}
+                  alt={user.username}
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+                <span className="text-sm font-medium text-gray-700 hidden sm:block">
+                  {user?.username || 'User'}
+                </span>
+                <svg className="w-4 h-4 text-gray-500 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* Profile Dropdown Menu */}
+              {showProfileMenu && (
+                <div 
+                  className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+                  onMouseLeave={() => setShowProfileMenu(false)}
+                >
+                  <div className="py-2">
+                    <button
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        handleSectionChange('profile');
+                      }}
+                      className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <svg className="w-4 h-4 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      Profile
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        // Handle settings navigation here
+                        console.log('Settings clicked');
+                      }}
+                      className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <svg className="w-4 h-4 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      Settings
+                    </button>
+                    <div className="border-t border-gray-100 my-1"></div>
+                    <button
+                      onClick={handleLogout}
+                      disabled={logoutMutation.isPending}
+                      className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                    >
+                      <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
