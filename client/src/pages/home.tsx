@@ -20,7 +20,10 @@ export default function Home() {
   const [activeSection, setActiveSection] = useState<Section>("discovery");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearchResults, setShowSearchResults] = useState(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   // Initialize WebSocket connection
   const { sendMessage, lastMessage, connectionStatus } = useWebSocket();
@@ -34,22 +37,80 @@ export default function Home() {
     }
   }, [connectionStatus, sendMessage, user]);
 
-  // Close notifications when clicking outside
+  // Close notifications and search when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
         setShowNotifications(false);
       }
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false);
+      }
     }
 
-    if (showNotifications) {
+    if (showNotifications || showSearchResults) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showNotifications]);
+  }, [showNotifications, showSearchResults]);
+
+  // Generate search suggestions based on query
+  const getSearchSuggestions = (query: string) => {
+    const lowerQuery = query.toLowerCase();
+    const suggestions = [];
+
+    // Travel/Booking related suggestions
+    if (lowerQuery.includes('book') || lowerQuery.includes('ticket') || lowerQuery.includes('travel') || lowerQuery.includes('bus') || lowerQuery.includes('train') || lowerQuery.includes('hotel')) {
+      suggestions.push(
+        { type: 'booking', icon: '🚌', title: 'Book Bus Tickets', description: 'Find and book bus tickets for your journey', action: () => handleSectionChange('travel') },
+        { type: 'booking', icon: '🚂', title: 'Book Train Tickets', description: 'Search and book train tickets', action: () => handleSectionChange('travel') },
+        { type: 'booking', icon: '🏨', title: 'Book Hotels', description: 'Find and book hotels for your stay', action: () => handleSectionChange('travel') }
+      );
+    }
+
+    // Food related suggestions
+    if (lowerQuery.includes('food') || lowerQuery.includes('order') || lowerQuery.includes('restaurant') || lowerQuery.includes('pizza') || lowerQuery.includes('burger')) {
+      suggestions.push(
+        { type: 'food', icon: '🍕', title: 'Order Food', description: 'Browse restaurants and order food online', action: () => handleSectionChange('food') },
+        { type: 'food', icon: '🍔', title: 'Fast Food', description: 'Quick bites and fast food options', action: () => handleSectionChange('food') }
+      );
+    }
+
+    // Payment related suggestions
+    if (lowerQuery.includes('pay') || lowerQuery.includes('payment') || lowerQuery.includes('money') || lowerQuery.includes('transfer')) {
+      suggestions.push(
+        { type: 'payment', icon: '💳', title: 'VerserPay', description: 'Make payments and money transfers', action: () => handleSectionChange('verserpay') },
+        { type: 'payment', icon: '💰', title: 'Wallet', description: 'Check your wallet balance and transactions', action: () => handleSectionChange('verserpay') }
+      );
+    }
+
+    // Community/Social suggestions
+    if (lowerQuery.includes('community') || lowerQuery.includes('group') || lowerQuery.includes('chat') || lowerQuery.includes('message')) {
+      suggestions.push(
+        { type: 'social', icon: '👥', title: 'Communities', description: 'Join and explore communities', action: () => handleSectionChange('communities') },
+        { type: 'social', icon: '💬', title: 'Chat', description: 'Start conversations and messaging', action: () => handleSectionChange('chat') }
+      );
+    }
+
+    // General suggestions if no specific matches
+    if (suggestions.length === 0 && query.length > 0) {
+      suggestions.push(
+        { type: 'general', icon: '🧭', title: 'Explore Discovery', description: 'Browse trending posts and content', action: () => handleSectionChange('discovery') },
+        { type: 'general', icon: '✈️', title: 'Travel Services', description: 'Book tickets and plan your journey', action: () => handleSectionChange('travel') },
+        { type: 'general', icon: '🍽️', title: 'Food Delivery', description: 'Order food from local restaurants', action: () => handleSectionChange('food') }
+      );
+    }
+
+    return suggestions.slice(0, 6); // Limit to 6 suggestions
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setShowSearchResults(query.length > 0);
+  };
 
   if (!user) {
     return null; // This should not happen due to ProtectedRoute
@@ -123,11 +184,14 @@ export default function Home() {
           </div>
 
           {/* Search Bar */}
-          <div className="flex-1 max-w-md mx-4">
+          <div className="flex-1 max-w-md mx-4" ref={searchRef}>
             <div className="relative">
               <input
                 type="text"
                 placeholder="Search Verser..."
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                onFocus={() => searchQuery.length > 0 && setShowSearchResults(true)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
@@ -135,6 +199,40 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
+              
+              {/* Search Results Dropdown */}
+              {showSearchResults && searchQuery.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+                  <div className="p-2">
+                    {getSearchSuggestions(searchQuery).map((suggestion, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          suggestion.action();
+                          setShowSearchResults(false);
+                          setSearchQuery("");
+                        }}
+                        className="w-full flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg text-left transition-colors"
+                      >
+                        <span className="text-2xl mt-1">{suggestion.icon}</span>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900">{suggestion.title}</h4>
+                          <p className="text-sm text-gray-600 mt-1">{suggestion.description}</p>
+                        </div>
+                        <svg className="w-5 h-5 text-gray-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    ))}
+                    {getSearchSuggestions(searchQuery).length === 0 && (
+                      <div className="p-4 text-center text-gray-500">
+                        <p>No results found for "{searchQuery}"</p>
+                        <p className="text-sm mt-1">Try searching for "book tickets", "order food", or "pay"</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
