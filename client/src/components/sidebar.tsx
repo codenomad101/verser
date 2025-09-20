@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 import { 
   MessageSquare, 
   Users, 
@@ -13,7 +14,8 @@ import {
   ChevronLeft, 
   ChevronRight,
   User,
-  Menu
+  Menu,
+  Shield
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -38,7 +40,11 @@ export default function Sidebar({
   onToggleCollapse 
 }: SidebarProps) {
   const { user, logoutMutation } = useAuth();
+  const [, setLocation] = useLocation();
   const [showSettings, setShowSettings] = useState(false);
+
+  // Check if user is admin by configured email or username 'admin'
+  const isAdmin = !!user && (user.username === 'admin' || user.email === 'admin@example.com');
 
   const menuItems = [
     { id: "chat" as const, icon: MessageSquare, label: "Chat", notifications: 3 },
@@ -139,6 +145,12 @@ export default function Sidebar({
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </DropdownMenuItem>
+              {isAdmin && (
+                <DropdownMenuItem onClick={() => setLocation('/admin')}>
+                  <Shield className="mr-2 h-4 w-4" />
+                  Admin Dashboard
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={handleLogout} className="text-red-600">
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
@@ -155,6 +167,16 @@ export default function Sidebar({
               <Settings className="h-4 w-4" />
               <span className="ml-3">Settings</span>
             </Button>
+            {isAdmin && (
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={() => setLocation('/admin')}
+              >
+                <Shield className="h-4 w-4" />
+                <span className="ml-3">Admin Dashboard</span>
+              </Button>
+            )}
             <Button
               variant="ghost"
               className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"

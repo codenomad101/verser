@@ -6,6 +6,8 @@ import DiscoverySection from "@/components/discovery-section";
 import EnhancedDiscovery from "@/components/enhanced-discovery";
 import ProfileSection from "@/components/profile-section";
 import NotificationsSection from "@/components/notifications-section";
+import { useLocation } from "wouter";
+import { Shield } from "lucide-react";
 
 import TopNavigation from "@/components/top-navigation";
 import VerserPaySection from "@/components/verserpay-section";
@@ -20,6 +22,7 @@ type Section = "chat" | "communities" | "discovery" | "profile" | "verserpay" | 
 
 export default function Home() {
   const { user, logoutMutation } = useAuth();
+  const [, setLocation] = useLocation();
   const [activeSection, setActiveSection] = useState<Section>("discovery");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -27,6 +30,9 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [lastMessage, setLastMessage] = useState<any>(null);
+
+  // Check if user is admin by configured email or username 'admin'
+  const isAdmin = !!user && (user.username === 'admin' || user.email === 'admin@example.com');
 
   const searchRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
@@ -402,6 +408,18 @@ export default function Home() {
                         </svg>
                         Settings
                       </button>
+                      {isAdmin && (
+                        <button
+                          onClick={() => {
+                            setShowProfileMenu(false);
+                            setLocation('/admin');
+                          }}
+                          className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <Shield className="w-4 h-4 mr-3 text-red-500" />
+                          Admin Dashboard
+                        </button>
+                      )}
                       <div className="border-t border-gray-100 my-1"></div>
                       <button
                         onClick={handleLogout}
@@ -476,6 +494,18 @@ export default function Home() {
                       </svg>
                       Settings
                     </button>
+                    {isAdmin && (
+                      <button
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          setLocation('/admin');
+                        }}
+                        className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <Shield className="w-4 h-4 mr-3 text-red-500" />
+                        Admin Dashboard
+                      </button>
+                    )}
                     <div className="border-t border-gray-100 my-1"></div>
                     <button
                       onClick={handleLogout}

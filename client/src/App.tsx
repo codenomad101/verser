@@ -9,6 +9,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import AuthPage from "@/pages/auth-page";
 import SimpleAuth from "@/pages/simple-auth";
+import { AdminPage } from "@/pages/admin-page";
 import { Loader2 } from "lucide-react";
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element }) {
@@ -74,6 +75,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/auth" component={SimpleAuth} />
+      <Route path="/admin" component={() => user ? <AdminPage /> : <SimpleAuth />} />
       <Route path="/" component={() => user ? <Home /> : <SimpleAuth />} />
       <Route component={NotFound} />
     </Switch>

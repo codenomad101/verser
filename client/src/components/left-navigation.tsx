@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { MessageSquare, Users, Compass, User, ChevronLeft, ChevronRight } from "lucide-react";
+import { MessageSquare, Users, Compass, User, ChevronLeft, ChevronRight, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
 
 interface LeftNavigationProps {
   activeSection: string;
@@ -9,6 +10,7 @@ interface LeftNavigationProps {
 
 export default function LeftNavigation({ activeSection, onSectionChange }: LeftNavigationProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [, setLocation] = useLocation();
 
   const mainNavigationItems = [
     { id: "chat", icon: MessageSquare, label: "Chat", color: "text-blue-500", notifications: 3 },
@@ -18,6 +20,7 @@ export default function LeftNavigation({ activeSection, onSectionChange }: LeftN
 
   const profileItems = [
     { id: "profile", icon: User, label: "Profile", color: "text-gray-600", notifications: 1 },
+    { id: "admin", icon: Shield, label: "Admin", color: "text-red-500", notifications: 0, isAdmin: true },
   ];
 
   return (
@@ -86,10 +89,18 @@ export default function LeftNavigation({ activeSection, onSectionChange }: LeftN
           const Icon = item.icon;
           const isActive = activeSection === item.id;
           
+          const handleClick = () => {
+            if (item.id === 'admin') {
+              setLocation('/admin');
+            } else {
+              onSectionChange(item.id);
+            }
+          };
+          
           return (
             <div key={item.id} className="relative">
               <button
-                onClick={() => onSectionChange(item.id)}
+                onClick={handleClick}
                 className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-300 transform hover:scale-105 ${
                   isActive 
                     ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg' 
