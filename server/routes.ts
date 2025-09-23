@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { insertMessageSchema, insertPostSchema, insertCommunitySchema, loginSchema, registerSchema, updateUserSettingsSchema } from "@shared/schema";
+import { insertMessageSchema, insertPostSchema, insertCommunitySchema, loginSchema, registerSchema, updateUserSettingsSchema, insertFoodOrderSchema, insertTravelBookingSchema } from "@shared/schema";
 import { generateToken, hashPassword, comparePassword, authenticateToken, optionalAuth, type AuthenticatedRequest } from "./auth";
 import { requireAdmin, optionalAdmin } from "./admin";
 
@@ -754,6 +754,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Orders (Food)
+  app.post('/api/orders', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ message: 'Not authenticated' });
+      const data = insertFoodOrderSchema.parse({
+        ...req.body,
+        userId: req.user.id,
+      });
+      const order = await storage.createFoodOrder(data);
+      res.status(201).json(order);
+    } catch (error) {
+      res.status(400).json({ message: 'Invalid order data' });
+    }
+  });
+
+  // Travel Bookings
+  app.post('/api/travel-bookings', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ message: 'Not authenticated' });
+      const data = insertTravelBookingSchema.parse({
+        ...req.body,
+        userId: req.user.id,
+      });
+      const booking = await storage.createTravelBooking(data);
+      res.status(201).json(booking);
+    } catch (error) {
+      res.status(400).json({ message: 'Invalid booking data' });
+    }
+  });
+
   // Admin Routes
   app.get('/api/admin/stats', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res) => {
     try {
@@ -848,6 +878,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: 'Post deleted successfully' });
     } catch (error) {
       res.status(500).json({ message: 'Failed to delete post' });
+    }
+  });
+
+  // Admin - Food Orders
+  app.get('/api/admin/orders', authenticateToken, requireAdmin, async (_req: AuthenticatedRequest, res) => {
+    try {
+      const orders = await storage.getAllFoodOrders();
+      res.json(orders);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch orders' });
+    }
+  });
+
+  app.put('/api/admin/orders/:id/status', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      const { status } = req.body;
+      if (isNaN(orderId)) return res.status(400).json({ message: 'Invalid order ID' });
+      const updated = await storage.updateFoodOrderStatus(orderId, status);
+      if (!updated) return res.status(404).json({ message: 'Order not found' });
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to update order status' });
+    }
+  });
+
+  // Admin - Travel Bookings
+  app.get('/api/admin/travel-bookings', authenticateToken, requireAdmin, async (_req: AuthenticatedRequest, res) => {
+    try {
+      const bookings = await storage.getAllTravelBookings();
+      res.json(bookings);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch bookings' });
+    }
+  });
+
+  app.put('/api/admin/travel-bookings/:id/status', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const bookingId = parseInt(req.params.id);
+      const { status } = req.body;
+      if (isNaN(bookingId)) return res.status(400).json({ message: 'Invalid booking ID' });
+      const updated = await storage.updateTravelBookingStatus(bookingId, status);
+      if (!updated) return res.status(404).json({ message: 'Booking not found' });
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to update booking status' });
     }
   });
 

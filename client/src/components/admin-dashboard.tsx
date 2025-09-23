@@ -60,11 +60,38 @@ interface Community {
   createdAt: string;
 }
 
+type OrderStatus = 'pending' | 'preparing' | 'delivered' | 'cancelled';
+interface FoodOrder {
+  id: number;
+  userId: number;
+  items: Array<{ id: number; name: string; price: number; quantity: number }>;
+  total: number;
+  status: OrderStatus;
+  createdAt: string;
+}
+
+type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
+interface TravelBooking {
+  id: number;
+  userId: number;
+  type: 'bus' | 'train' | 'hotel' | string;
+  from?: string | null;
+  to?: string | null;
+  location?: string | null;
+  travelDate?: string | null;
+  details?: any;
+  price: number;
+  status: BookingStatus;
+  createdAt: string;
+}
+
 export function AdminDashboard() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
+  const [orders, setOrders] = useState<FoodOrder[]>([]);
+  const [bookings, setBookings] = useState<TravelBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -77,17 +104,21 @@ export function AdminDashboard() {
       const token = localStorage.getItem('auth_token');
       const headers = { 'Authorization': `Bearer ${token}` };
 
-      const [statsRes, usersRes, postsRes, communitiesRes] = await Promise.all([
+      const [statsRes, usersRes, postsRes, communitiesRes, ordersRes, bookingsRes] = await Promise.all([
         fetch('/api/admin/stats', { headers }),
         fetch('/api/admin/users', { headers }),
         fetch('/api/admin/posts', { headers }),
-        fetch('/api/admin/communities', { headers })
+        fetch('/api/admin/communities', { headers }),
+        fetch('/api/admin/orders', { headers }),
+        fetch('/api/admin/travel-bookings', { headers })
       ]);
 
       if (statsRes.ok) setStats(await statsRes.json());
       if (usersRes.ok) setUsers(await usersRes.json());
       if (postsRes.ok) setPosts(await postsRes.json());
       if (communitiesRes.ok) setCommunities(await communitiesRes.json());
+      if (ordersRes.ok) setOrders(await ordersRes.json());
+      if (bookingsRes.ok) setBookings(await bookingsRes.json());
     } catch (error) {
       console.error('Failed to fetch admin data:', error);
     } finally {
@@ -121,6 +152,44 @@ export function AdminDashboard() {
     user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const updateOrderStatus = async (orderId: number, status: OrderStatus) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/admin/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status })
+      });
+      if (response.ok) {
+        setOrders(orders.map(o => o.id === orderId ? { ...o, status } : o));
+      }
+    } catch (error) {
+      console.error('Failed to update order status:', error);
+    }
+  };
+
+  const updateBookingStatus = async (bookingId: number, status: BookingStatus) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/admin/travel-bookings/${bookingId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status })
+      });
+      if (response.ok) {
+        setBookings(bookings.map(b => b.id === bookingId ? { ...b, status } : b));
+      }
+    } catch (error) {
+      console.error('Failed to update booking status:', error);
+    }
+  };
 
   if (loading) {
     return (
@@ -206,6 +275,8 @@ export function AdminDashboard() {
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="posts">Posts</TabsTrigger>
           <TabsTrigger value="communities">Communities</TabsTrigger>
+          <TabsTrigger value="orders">Orders</TabsTrigger>
+          <TabsTrigger value="bookings">Bookings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="users" className="space-y-4">
@@ -388,6 +459,103 @@ export function AdminDashboard() {
                           <Button size="sm" variant="destructive">
                             <Trash2 className="h-4 w-4" />
                           </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="orders" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Orders Management</CardTitle>
+              <CardDescription>Manage food orders created by users</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Order</TableHead>
+                    <TableHead>User ID</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {orders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell>
+                        <div className="text-sm">
+                          {order.items?.slice(0, 3).map((i) => i.name).join(', ')}
+                          {order.items && order.items.length > 3 ? '…' : ''}
+                        </div>
+                      </TableCell>
+                      <TableCell>{order.userId}</TableCell>
+                      <TableCell>₹{order.total}</TableCell>
+                      <TableCell>
+                        <Badge>{order.status}</Badge>
+                      </TableCell>
+                      <TableCell>{new Date(order.createdAt).toLocaleString()}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button size="sm" variant="outline" onClick={() => updateOrderStatus(order.id, 'preparing')}>Preparing</Button>
+                          <Button size="sm" variant="outline" onClick={() => updateOrderStatus(order.id, 'delivered')}>Delivered</Button>
+                          <Button size="sm" variant="destructive" onClick={() => updateOrderStatus(order.id, 'cancelled')}>Cancel</Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="bookings" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Travel Bookings</CardTitle>
+              <CardDescription>Manage user travel bookings</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Route / Location</TableHead>
+                    <TableHead>User ID</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {bookings.map((b) => (
+                    <TableRow key={b.id}>
+                      <TableCell className="capitalize">{b.type}</TableCell>
+                      <TableCell>
+                        {b.type === 'hotel' ? (
+                          <span>{b.location}</span>
+                        ) : (
+                          <span>{b.from} → {b.to}</span>
+                        )}
+                      </TableCell>
+                      <TableCell>{b.userId}</TableCell>
+                      <TableCell>₹{b.price}</TableCell>
+                      <TableCell><Badge>{b.status}</Badge></TableCell>
+                      <TableCell>{b.travelDate ? new Date(b.travelDate).toLocaleDateString() : '-'}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button size="sm" variant="outline" onClick={() => updateBookingStatus(b.id, 'confirmed')}>Confirm</Button>
+                          <Button size="sm" variant="outline" onClick={() => updateBookingStatus(b.id, 'completed')}>Complete</Button>
+                          <Button size="sm" variant="destructive" onClick={() => updateBookingStatus(b.id, 'cancelled')}>Cancel</Button>
                         </div>
                       </TableCell>
                     </TableRow>

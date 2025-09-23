@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { type AuthenticatedRequest } from './auth';
 
-// Allow configuring admin by email via env var; fallback to a sensible default
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@example.com';
+// Allow configuring admin by email via env var; fallback to demo user for convenience
+// In production, set ADMIN_EMAIL to your real admin email.
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'alex@example.com';
 
 export function requireAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   // Check if user is authenticated

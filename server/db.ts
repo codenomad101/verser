@@ -180,4 +180,42 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return post || undefined;
   }
+
+  // Food Orders
+  async getAllFoodOrders(): Promise<schema.FoodOrder[]> {
+    return await db.select().from(schema.foodOrders);
+  }
+
+  async createFoodOrder(order: schema.InsertFoodOrder): Promise<schema.FoodOrder> {
+    const [row] = await db.insert(schema.foodOrders).values(order as any).returning();
+    return row;
+  }
+
+  async updateFoodOrderStatus(id: number, status: string): Promise<schema.FoodOrder | undefined> {
+    const [row] = await db
+      .update(schema.foodOrders)
+      .set({ status })
+      .where(eq(schema.foodOrders.id, id))
+      .returning();
+    return row || undefined;
+  }
+
+  // Travel Bookings
+  async getAllTravelBookings(): Promise<schema.TravelBooking[]> {
+    return await db.select().from(schema.travelBookings);
+  }
+
+  async createTravelBooking(booking: schema.InsertTravelBooking): Promise<schema.TravelBooking> {
+    const [row] = await db.insert(schema.travelBookings).values(booking as any).returning();
+    return row;
+  }
+
+  async updateTravelBookingStatus(id: number, status: string): Promise<schema.TravelBooking | undefined> {
+    const [row] = await db
+      .update(schema.travelBookings)
+      .set({ status })
+      .where(eq(schema.travelBookings.id, id))
+      .returning();
+    return row || undefined;
+  }
 }

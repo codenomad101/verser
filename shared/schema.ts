@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -70,6 +70,31 @@ export const posts = pgTable("posts", {
   isRepost: boolean("is_repost").notNull().default(false),
   isTrending: boolean("is_trending").notNull().default(false),
   sentiment: text("sentiment").default("neutral"), // positive, negative, neutral
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Food orders for the food delivery section
+export const foodOrders = pgTable("food_orders", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  items: jsonb("items").notNull(), // [{ id, name, price, quantity }]
+  total: integer("total").notNull().default(0), // store in smallest currency unit or plain integer
+  status: text("status").notNull().default("pending"), // pending, preparing, delivered, cancelled
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Travel bookings for buses, trains, and hotels
+export const travelBookings = pgTable("travel_bookings", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  type: text("type").notNull(), // bus, train, hotel
+  from: text("from"),
+  to: text("to"),
+  location: text("location"),
+  travelDate: timestamp("travel_date"),
+  details: jsonb("details"), // flexible extra info per type
+  price: integer("price").notNull().default(0),
+  status: text("status").notNull().default("pending"), // pending, confirmed, cancelled, completed
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -161,6 +186,23 @@ export const insertPostSchema = createInsertSchema(posts).pick({
   tags: true,
 });
 
+export const insertFoodOrderSchema = createInsertSchema(foodOrders).pick({
+  userId: true,
+  items: true,
+  total: true,
+});
+
+export const insertTravelBookingSchema = createInsertSchema(travelBookings).pick({
+  userId: true,
+  type: true,
+  from: true,
+  to: true,
+  location: true,
+  travelDate: true,
+  details: true,
+  price: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Conversation = typeof conversations.$inferSelect;
@@ -171,3 +213,7 @@ export type Community = typeof communities.$inferSelect;
 export type InsertCommunity = z.infer<typeof insertCommunitySchema>;
 export type Post = typeof posts.$inferSelect;
 export type InsertPost = z.infer<typeof insertPostSchema>;
+export type FoodOrder = typeof foodOrders.$inferSelect;
+export type InsertFoodOrder = z.infer<typeof insertFoodOrderSchema>;
+export type TravelBooking = typeof travelBookings.$inferSelect;
+export type InsertTravelBooking = z.infer<typeof insertTravelBookingSchema>;

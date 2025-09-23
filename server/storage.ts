@@ -1,4 +1,4 @@
-import { users, conversations, messages, communities, posts, type User, type InsertUser, type Conversation, type InsertConversation, type Message, type InsertMessage, type Community, type InsertCommunity, type Post, type InsertPost } from "@shared/schema";
+import { users, conversations, messages, communities, posts, foodOrders, travelBookings, type User, type InsertUser, type Conversation, type InsertConversation, type Message, type InsertMessage, type Community, type InsertCommunity, type Post, type InsertPost, type FoodOrder, type InsertFoodOrder, type TravelBooking, type InsertTravelBooking } from "@shared/schema";
 
 export interface IStorage {
   // Users
@@ -34,6 +34,16 @@ export interface IStorage {
   getTrendingPosts(): Promise<Post[]>;
   createPost(post: InsertPost): Promise<Post>;
   updatePostStats(id: number, likes?: number, comments?: number, shares?: number): Promise<Post | undefined>;
+
+  // Food Orders
+  getAllFoodOrders(): Promise<FoodOrder[]>;
+  createFoodOrder(order: InsertFoodOrder): Promise<FoodOrder>;
+  updateFoodOrderStatus(id: number, status: string): Promise<FoodOrder | undefined>;
+
+  // Travel Bookings
+  getAllTravelBookings(): Promise<TravelBooking[]>;
+  createTravelBooking(booking: InsertTravelBooking): Promise<TravelBooking>;
+  updateTravelBookingStatus(id: number, status: string): Promise<TravelBooking | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -42,11 +52,15 @@ export class MemStorage implements IStorage {
   private messages: Map<number, Message>;
   private communities: Map<number, Community>;
   private posts: Map<number, Post>;
+  private foodOrders: Map<number, FoodOrder>;
+  private travelBookings: Map<number, TravelBooking>;
   private currentUserId: number;
   private currentConversationId: number;
   private currentMessageId: number;
   private currentCommunityId: number;
   private currentPostId: number;
+  private currentFoodOrderId: number;
+  private currentTravelBookingId: number;
 
   constructor() {
     this.users = new Map();
@@ -54,11 +68,15 @@ export class MemStorage implements IStorage {
     this.messages = new Map();
     this.communities = new Map();
     this.posts = new Map();
+    this.foodOrders = new Map();
+    this.travelBookings = new Map();
     this.currentUserId = 1;
     this.currentConversationId = 1;
     this.currentMessageId = 1;
     this.currentCommunityId = 1;
     this.currentPostId = 1;
+    this.currentFoodOrderId = 1;
+    this.currentTravelBookingId = 1;
 
     // Initialize with some sample data
     this.initializeData();
@@ -331,6 +349,65 @@ export class MemStorage implements IStorage {
       return updatedPost;
     }
     return undefined;
+  }
+
+  // Food Orders
+  async getAllFoodOrders(): Promise<FoodOrder[]> {
+    return Array.from(this.foodOrders.values());
+  }
+
+  async createFoodOrder(order: InsertFoodOrder): Promise<FoodOrder> {
+    const id = this.currentFoodOrderId++;
+    const newOrder: FoodOrder = {
+      id,
+      userId: order.userId,
+      items: order.items as any,
+      total: order.total ?? 0,
+      status: 'pending',
+      createdAt: new Date(),
+    } as any;
+    this.foodOrders.set(id, newOrder);
+    return newOrder;
+  }
+
+  async updateFoodOrderStatus(id: number, status: string): Promise<FoodOrder | undefined> {
+    const existing = this.foodOrders.get(id);
+    if (!existing) return undefined;
+    const updated = { ...existing, status } as FoodOrder;
+    this.foodOrders.set(id, updated);
+    return updated;
+  }
+
+  // Travel Bookings
+  async getAllTravelBookings(): Promise<TravelBooking[]> {
+    return Array.from(this.travelBookings.values());
+  }
+
+  async createTravelBooking(booking: InsertTravelBooking): Promise<TravelBooking> {
+    const id = this.currentTravelBookingId++;
+    const newBooking: TravelBooking = {
+      id,
+      userId: booking.userId,
+      type: booking.type,
+      from: (booking as any).from ?? null,
+      to: (booking as any).to ?? null,
+      location: (booking as any).location ?? null,
+      travelDate: (booking as any).travelDate ?? null,
+      details: (booking as any).details ?? null,
+      price: booking.price ?? 0,
+      status: 'pending',
+      createdAt: new Date(),
+    } as any;
+    this.travelBookings.set(id, newBooking);
+    return newBooking;
+  }
+
+  async updateTravelBookingStatus(id: number, status: string): Promise<TravelBooking | undefined> {
+    const existing = this.travelBookings.get(id);
+    if (!existing) return undefined;
+    const updated = { ...existing, status } as TravelBooking;
+    this.travelBookings.set(id, updated);
+    return updated;
   }
 }
 
