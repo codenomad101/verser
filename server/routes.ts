@@ -4,7 +4,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { insertMessageSchema, insertPostSchema, insertCommunitySchema, loginSchema, registerSchema, updateUserSettingsSchema, insertFoodOrderSchema, insertTravelBookingSchema } from "@shared/schema";
 import { generateToken, hashPassword, comparePassword, authenticateToken, optionalAuth, type AuthenticatedRequest } from "./auth";
-import { requireAdmin, optionalAdmin } from "./admin";
+import { requireAdmin, optionalAdmin, requireSuperuser } from "./admin";
 
 interface WebSocketClient extends WebSocket {
   userId?: number;
@@ -111,32 +111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // API Routes
 
-  // Demo login endpoint for quick access
-  app.post('/api/demo-login', (req, res) => {
-    const demoUser = {
-      id: 1,
-      username: 'alex_johnson',
-      email: 'alex@example.com',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
-      bio: 'Product Designer',
-      status: 'online',
-      lastSeen: new Date(),
-      showLastSeen: true,
-      showOnlineStatus: true,
-      isVerified: false,
-      followersCount: 1250,
-      followingCount: 890,
-      about: null,
-      createdAt: new Date()
-    };
-    
-    const token = generateToken(demoUser.id, demoUser.username, demoUser.email);
-    
-    res.status(200).json({
-      user: demoUser,
-      token
-    });
-  });
+  // Removed demo login endpoint
 
   // Authentication
   app.post('/api/auth/register', async (req, res) => {
@@ -162,7 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Generate token
-      const token = generateToken(user.id, user.username, user.email);
+      const token = generateToken(user.id, user.username, user.email, (user as any).role || 'user');
       
       // Remove password from response
       const { password, ...userWithoutPassword } = user;
@@ -180,39 +155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('Login attempt:', req.body);
       
-      // Quick demo account bypass
-      if (req.body.email === 'alex@example.com' && req.body.password === 'password123') {
-        console.log('Demo account login detected');
-        
-        // Generate token for demo user
-        const token = generateToken(1, 'alex_johnson', 'alex@example.com');
-        
-        const demoUser = {
-          id: 1,
-          username: 'alex_johnson',
-          email: 'alex@example.com',
-          avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
-          bio: 'Product Designer',
-          status: 'online',
-          lastSeen: new Date(),
-          showLastSeen: true,
-          showOnlineStatus: true,
-          isVerified: false,
-          followersCount: 1250,
-          followingCount: 890,
-          about: null,
-          createdAt: new Date()
-        };
-        
-        console.log('Returning demo user:', demoUser);
-        
-        return res.status(200).json({
-          user: demoUser,
-          token
-        });
-      }
-      
-      // Process other login attempts
+      // Process login attempts
       const validatedData = loginSchema.parse(req.body);
       
       // Find user by email for other accounts
@@ -232,7 +175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUserSettings(user.id, { lastSeen: new Date() });
 
       // Generate token
-      const token = generateToken(user.id, user.username, user.email);
+      const token = generateToken(user.id, user.username, user.email, (user as any).role || 'user');
       
       // Remove password from response
       const { password, ...userWithoutPassword } = user;
@@ -347,28 +290,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Notifications
-  app.get('/api/notifications', async (req: AuthenticatedRequest, res) => {
+  app.get('/api/notifications', async (_req: AuthenticatedRequest, res) => {
     try {
-      // Return sample notifications for now
-      const notifications = [
-        {
-          id: 1,
-          type: 'like',
-          message: 'Alex Johnson liked your post',
-          avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face',
-          timestamp: new Date(Date.now() - 5 * 60 * 1000),
-          read: false
-        },
-        {
-          id: 2,
-          type: 'comment',
-          message: 'Sarah Chen commented on your post',
-          avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b55c?w=40&h=40&fit=crop&crop=face',
-          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-          read: false
-        }
-      ];
-      res.json(notifications);
+      // No dummy notifications; return empty for now
+      res.json([]);
     } catch (error) {
       res.status(500).json({ message: 'Failed to fetch notifications' });
     }
@@ -495,92 +420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Communities
   app.get('/api/communities', async (req, res) => {
     try {
-      let communities = await storage.getAllCommunities();
-      
-      // If no communities exist, create some sample ones
-      if (communities.length === 0) {
-        const sampleCommunities = [
-          {
-            name: "Tech Innovators",
-            description: "Discussing cutting-edge technology and innovation",
-            icon: "💻",
-            color: "#3B82F6",
-            memberCount: 15420,
-            onlineCount: 342
-          },
-          {
-            name: "Creative Minds",
-            description: "A space for designers, artists, and creative professionals",
-            icon: "🎨",
-            color: "#8B5CF6",
-            memberCount: 8750,
-            onlineCount: 156
-          },
-          {
-            name: "Startup Hub",
-            description: "Entrepreneurs sharing insights and building connections",
-            icon: "🚀",
-            color: "#10B981",
-            memberCount: 12300,
-            onlineCount: 234
-          },
-          {
-            name: "Photography",
-            description: "Capturing moments and sharing visual stories",
-            icon: "📸",
-            color: "#F59E0B",
-            memberCount: 9870,
-            onlineCount: 178
-          }
-        ];
-
-        for (const community of sampleCommunities) {
-          await storage.createCommunity(community);
-        }
-        
-        communities = await storage.getAllCommunities();
-        
-        // Add sample posts to communities
-        const samplePosts = [
-          {
-            userId: 1,
-            communityId: 1,
-            title: "The Future of AI in Web Development",
-            content: "Exploring how artificial intelligence is transforming the way we build websites and applications. From automated code generation to intelligent UX optimization, AI is reshaping our industry.",
-            imageUrl: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=300&fit=crop",
-            tags: ["AI", "WebDev", "Technology"]
-          },
-          {
-            userId: 1,
-            communityId: 2,
-            title: "Minimalist Design Principles for 2024",
-            content: "Less is more. Discover the key principles of minimalist design that are driving user engagement and creating memorable digital experiences.",
-            imageUrl: "https://images.unsplash.com/photo-1586717791821-3f44a563fa4c?w=600&h=300&fit=crop",
-            tags: ["Design", "Minimalism", "UX"]
-          },
-          {
-            userId: 1,
-            communityId: 3,
-            title: "Building a Startup: Lessons from Year One",
-            content: "Sharing insights from our first year as founders. The challenges, victories, and everything in between. What we wish we knew before starting.",
-            imageUrl: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=600&h=300&fit=crop",
-            tags: ["Startup", "Entrepreneurship", "Business"]
-          },
-          {
-            userId: 1,
-            communityId: 4,
-            title: "Street Photography Tips for Beginners",
-            content: "Capturing authentic moments in urban environments. Essential techniques for composition, lighting, and storytelling through street photography.",
-            imageUrl: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600&h=300&fit=crop",
-            tags: ["Photography", "Street", "Tips"]
-          }
-        ];
-
-        for (const post of samplePosts) {
-          await storage.createPost(post);
-        }
-      }
-      
+      const communities = await storage.getAllCommunities();
       res.json(communities);
     } catch (error) {
       res.status(500).json({ message: 'Failed to fetch communities' });
@@ -755,6 +595,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Orders (Food)
+  app.get('/api/orders/mine', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ message: 'Not authenticated' });
+      const orders = await storage.getFoodOrdersByUser(req.user.id);
+      res.json(orders);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch orders' });
+    }
+  });
+
   app.post('/api/orders', authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) return res.status(401).json({ message: 'Not authenticated' });
@@ -770,6 +620,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Travel Bookings
+  app.get('/api/travel-bookings/mine', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ message: 'Not authenticated' });
+      const bookings = await storage.getTravelBookingsByUser(req.user.id);
+      res.json(bookings);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch bookings' });
+    }
+  });
+
   app.post('/api/travel-bookings', authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) return res.status(401).json({ message: 'Not authenticated' });
@@ -948,6 +808,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedUser);
     } catch (error) {
       res.status(500).json({ message: 'Failed to update user status' });
+    }
+  });
+
+  // Superuser - Update user role
+  app.put('/api/superuser/users/:id/role', authenticateToken, requireSuperuser, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { role } = req.body as { role: 'user' | 'admin' | 'superuser' };
+      if (isNaN(userId)) return res.status(400).json({ message: 'Invalid user ID' });
+      if (!['user', 'admin', 'superuser'].includes(role)) return res.status(400).json({ message: 'Invalid role' });
+
+      const updated = await storage.updateUserRole(userId, role);
+      if (!updated) return res.status(404).json({ message: 'User not found' });
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to update user role' });
+    }
+  });
+
+  // Chat Requests
+  app.get('/api/chat-requests', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ message: 'Not authenticated' });
+      const requests = await storage.getIncomingChatRequests(req.user.id);
+      res.json(requests.filter(r => r.status === 'pending'));
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch chat requests' });
+    }
+  });
+
+  app.post('/api/chat-requests', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ message: 'Not authenticated' });
+      const { receiverId, content } = req.body;
+      if (!receiverId || !content) return res.status(400).json({ message: 'receiverId and content are required' });
+      if (receiverId === req.user.id) return res.status(400).json({ message: 'Cannot send to self' });
+
+      const created = await storage.createChatRequest({ senderId: req.user.id, receiverId, content });
+      res.status(201).json(created);
+    } catch (error) {
+      res.status(400).json({ message: 'Invalid chat request' });
+    }
+  });
+
+  app.post('/api/chat-requests/:id/accept', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ message: 'Not authenticated' });
+      const id = parseInt(req.params.id);
+      const reqRow = (await storage.getIncomingChatRequests(req.user.id)).find(r => r.id === id);
+      if (!reqRow) return res.status(404).json({ message: 'Request not found' });
+      if (reqRow.receiverId !== req.user.id) return res.status(403).json({ message: 'Not allowed' });
+
+      await storage.updateChatRequestStatus(id, 'accepted');
+      // Create conversation and deliver initial message
+      const conv = await storage.createConversation({ name: `${reqRow.senderId}-${reqRow.receiverId}`, type: 'direct', description: null, memberCount: 2 });
+      await storage.createMessage({ conversationId: conv.id, userId: reqRow.senderId, content: reqRow.content, type: 'text' });
+
+      res.json({ conversationId: conv.id });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to accept request' });
+    }
+  });
+
+  app.post('/api/chat-requests/:id/reject', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ message: 'Not authenticated' });
+      const id = parseInt(req.params.id);
+      const reqRow = (await storage.getIncomingChatRequests(req.user.id)).find(r => r.id === id);
+      if (!reqRow) return res.status(404).json({ message: 'Request not found' });
+      if (reqRow.receiverId !== req.user.id) return res.status(403).json({ message: 'Not allowed' });
+
+      await storage.updateChatRequestStatus(id, 'rejected');
+      res.json({ message: 'Rejected' });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to reject request' });
     }
   });
 

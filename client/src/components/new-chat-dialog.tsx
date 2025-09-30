@@ -11,11 +11,12 @@ interface NewChatDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentUser: { id: number; username: string };
-  onConversationCreated: (conversationId: number) => void;
+  onRequestSent?: () => void;
 }
 
-export default function NewChatDialog({ open, onOpenChange, currentUser, onConversationCreated }: NewChatDialogProps) {
+export default function NewChatDialog({ open, onOpenChange, currentUser, onRequestSent }: NewChatDialogProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [message, setMessage] = useState("");
   const queryClient = useQueryClient();
 
   const { data: users = [] } = useQuery({
@@ -23,20 +24,27 @@ export default function NewChatDialog({ open, onOpenChange, currentUser, onConve
     select: (data) => Array.isArray(data) ? data : [],
   });
 
-  const createConversationMutation = useMutation({
-    mutationFn: async (userData: { name: string; userId: number }) => {
-      const response = await apiRequest("POST", "/api/conversations", {
-        name: `Chat with ${userData.name}`,
-        type: "direct",
-        userId: currentUser.id
+  const sendRequestMutation = useMutation({
+    mutationFn: async (payload: { receiverId: number; content: string }) => {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch('/api/chat-requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
       });
-      return response.json();
+      if (!res.ok) {
+        throw new Error('Failed to send chat request');
+      }
+      return res.json();
     },
-    onSuccess: (conversation) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
-      onConversationCreated(conversation.id);
+    onSuccess: () => {
+      onRequestSent && onRequestSent();
       onOpenChange(false);
       setSearchQuery("");
+      setMessage("");
     },
   });
 
@@ -46,10 +54,8 @@ export default function NewChatDialog({ open, onOpenChange, currentUser, onConve
   );
 
   const handleStartChat = (user: any) => {
-    createConversationMutation.mutate({
-      name: user.username,
-      userId: user.id
-    });
+    if (!message.trim()) return;
+    sendRequestMutation.mutate({ receiverId: user.id, content: message });
   };
 
   return (
@@ -71,6 +77,15 @@ export default function NewChatDialog({ open, onOpenChange, currentUser, onConve
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
+            />
+          </div>
+
+          {/* Message Input */}
+          <div>
+            <Input
+              placeholder="Write a message request..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
             />
           </div>
 
@@ -107,7 +122,7 @@ export default function NewChatDialog({ open, onOpenChange, currentUser, onConve
                   <Button
                     size="sm"
                     variant="ghost"
-                    disabled={createConversationMutation.isPending}
+disabled={sendRequestMutation.isPending}
                   >
                     Chat
                   </Button>

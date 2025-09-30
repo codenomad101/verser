@@ -6,11 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 
 export default function SimpleAuth() {
-  const [loginEmail, setLoginEmail] = useState("alex@example.com");
-  const [loginPassword, setLoginPassword] = useState("password123");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
   const [registerUsername, setRegisterUsername] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
+  const [registerPhone, setRegisterPhone] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -62,6 +63,7 @@ export default function SimpleAuth() {
         body: JSON.stringify({ 
           username: registerUsername, 
           email: registerEmail, 
+          phone: registerPhone,
           password: registerPassword 
         }),
       });
@@ -125,9 +127,6 @@ export default function SimpleAuth() {
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Signing in..." : "Sign In"}
                 </Button>
-                <p className="text-sm text-gray-600 text-center">
-                  Demo: alex@example.com / password123
-                </p>
               </form>
             </TabsContent>
             
@@ -148,6 +147,15 @@ export default function SimpleAuth() {
                     placeholder="Email"
                     value={registerEmail}
                     onChange={(e) => setRegisterEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <Input
+                    type="tel"
+                    placeholder="Phone"
+                    value={registerPhone}
+                    onChange={(e) => setRegisterPhone(e.target.value)}
                     required
                   />
                 </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Train, Bus, Hotel, Calendar, MapPin, Users, Clock, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,7 +29,7 @@ interface TravelOption {
 }
 
 export default function TravelSection({ currentUser }: TravelSectionProps) {
-  const [activeTab, setActiveTab] = useState("buses");
+  const [activeTab, setActiveTab] = useState(localStorage.getItem('travelTab') || "buses");
   const [searchFrom, setSearchFrom] = useState("");
   const [searchTo, setSearchTo] = useState("");
   const [searchDate, setSearchDate] = useState("");
@@ -225,6 +225,60 @@ export default function TravelSection({ currentUser }: TravelSectionProps) {
     </Card>
   );
 
+  const [bookings, setBookings] = useState<any[]>([]);
+
+  const fetchMyBookings = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch('/api/travel-bookings/mine', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (res.ok) setBookings(await res.json());
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    fetchMyBookings();
+  }, []);
+
+  const bookTravel = async (payload: any) => {
+    const token = localStorage.getItem('auth_token');
+    const res = await fetch('/api/travel-bookings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      await fetchMyBookings();
+    }
+  };
+
+  const handleBookTransport = (option: TravelOption) => {
+    const travelDateISO = searchDate ? new Date(searchDate).toISOString() : null;
+    bookTravel({
+      type: option.type,
+      from: option.from,
+      to: option.to,
+      travelDate: travelDateISO,
+      details: { name: option.name, amenities: option.amenities },
+      price: option.price,
+    });
+  };
+
+  const handleBookHotel = (option: TravelOption) => {
+    const travelDateISO = searchDate ? new Date(searchDate).toISOString() : null;
+    bookTravel({
+      type: 'hotel',
+      location: option.location,
+      travelDate: travelDateISO,
+      details: { name: option.name, amenities: option.amenities },
+      price: option.price,
+    });
+  };
+
   return (
     <div className="h-full overflow-auto p-2 sm:p-4 space-y-4 sm:space-y-6">
       {/* Header */}
@@ -233,8 +287,11 @@ export default function TravelSection({ currentUser }: TravelSectionProps) {
         <p className="text-gray-600 text-sm sm:text-base">Book buses, trains, and hotels</p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs value={activeTab} onValueChange={(val) => {
+          setActiveTab(val);
+          if (localStorage.getItem('travelTab')) localStorage.removeItem('travelTab');
+        }} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="buses" className="flex items-center gap-1 text-xs sm:text-sm">
             <Bus className="w-4 h-4" />
             Buses
@@ -246,6 +303,9 @@ export default function TravelSection({ currentUser }: TravelSectionProps) {
           <TabsTrigger value="hotels" className="flex items-center gap-1 text-xs sm:text-sm">
             <Hotel className="w-4 h-4" />
             Hotels
+          </TabsTrigger>
+          <TabsTrigger value="mybookings" className="flex items-center gap-1 text-xs sm:text-sm">
+            My Bookings
           </TabsTrigger>
         </TabsList>
 
@@ -293,7 +353,11 @@ export default function TravelSection({ currentUser }: TravelSectionProps) {
 
           {/* Bus Results */}
           <div className="space-y-3">
-            {getFilteredOptions('bus').map(renderTransportCard)}
+            {getFilteredOptions('bus').map((option) => (
+              <div key={option.id} onClick={() => handleBookTransport(option)}>
+                {renderTransportCard(option)}
+              </div>
+            ))}
           </div>
         </TabsContent>
 
@@ -341,7 +405,11 @@ export default function TravelSection({ currentUser }: TravelSectionProps) {
 
           {/* Train Results */}
           <div className="space-y-3">
-            {getFilteredOptions('train').map(renderTransportCard)}
+            {getFilteredOptions('train').map((option) => (
+              <div key={option.id} onClick={() => handleBookTransport(option)}>
+                {renderTransportCard(option)}
+              </div>
+            ))}
           </div>
         </TabsContent>
 
@@ -387,7 +455,39 @@ export default function TravelSection({ currentUser }: TravelSectionProps) {
 
           {/* Hotel Results */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-            {getFilteredOptions('hotel').map(renderHotelCard)}
+            {getFilteredOptions('hotel').map((option) => (
+              <div key={option.id} onClick={() => handleBookHotel(option)}>
+                {renderHotelCard(option)}
+              </div>
+            ))}
+          </div>
+        </TabsContent>
+        <TabsContent value="mybookings" className="space-y-4">
+          <div className="space-y-3">
+            {bookings.length === 0 ? (
+              <div className="text-sm text-gray-600">No bookings yet.</div>
+            ) : (
+              bookings.map((b) => (
+                <Card key={b.id}>
+                  <CardHeader>
+                    <CardTitle className="text-sm">{b.type.toUpperCase()} Booking #{b.id}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between text-sm">
+                      <div>
+                        {b.type === 'hotel' ? (
+                          <div>Location: {b.location}</div>
+                        ) : (
+                          <div>Route: {b.from} → {b.to}</div>
+                        )}
+                        <div className="text-gray-500">Status: {b.status}</div>
+                      </div>
+                      <div className="font-semibold">₹{b.price}</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         </TabsContent>
       </Tabs>

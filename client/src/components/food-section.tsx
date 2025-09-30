@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ShoppingCart, Star, Clock, Truck, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -225,6 +225,53 @@ export default function FoodSection({ currentUser }: FoodSectionProps) {
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
 
+  // Live orders state
+  const [orders, setOrders] = useState<any[]>([]);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+
+  const fetchMyOrders = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch('/api/orders/mine', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setOrders(await res.json());
+      }
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    fetchMyOrders();
+  }, []);
+
+  const placeOrder = async () => {
+    if (cart.length === 0) return;
+    setIsPlacingOrder(true);
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          items: cart.map(({ id, name, price, quantity }) => ({ id, name, price, quantity })),
+          total: getTotalPrice(),
+        }),
+      });
+      if (res.ok) {
+        setCart([]);
+        await fetchMyOrders();
+      }
+    } finally {
+      setIsPlacingOrder(false);
+    }
+  };
+
   return (
     <div className="h-full overflow-auto p-2 sm:p-4 space-y-4 sm:space-y-6">
       {/* Header */}
@@ -233,16 +280,16 @@ export default function FoodSection({ currentUser }: FoodSectionProps) {
           <h1 className="text-xl sm:text-2xl font-bold">Food Delivery</h1>
           <p className="text-gray-600 text-sm sm:text-base">Order your favorite meals</p>
         </div>
-        <div className="relative">
-          <Button className="relative">
+        <div className="flex items-center gap-2">
+          <Button className="relative" onClick={placeOrder} disabled={getTotalItems() === 0 || isPlacingOrder}>
             <ShoppingCart className="w-5 h-5 mr-2" />
-            Cart
-            {getTotalItems() > 0 && (
-              <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 min-w-[20px] h-5 flex items-center justify-center">
-                {getTotalItems()}
-              </Badge>
-            )}
+            {isPlacingOrder ? 'Placing...' : `Place Order (${getTotalItems()})`}
           </Button>
+          {getTotalItems() > 0 && (
+            <Badge className="bg-green-600 text-white text-xs px-2 h-6 flex items-center justify-center">
+              ₹{getTotalPrice()}
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -261,7 +308,9 @@ export default function FoodSection({ currentUser }: FoodSectionProps) {
         ))}
       </div>
 
-      <Tabs defaultValue="menu" className="w-full">
+      <Tabs defaultValue={(localStorage.getItem('foodTab') || 'menu') as any} className="w-full" onValueChange={(val) => {
+          if (localStorage.getItem('foodTab')) localStorage.removeItem('foodTab');
+        }}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="menu">Menu</TabsTrigger>
           <TabsTrigger value="orders">My Orders</TabsTrigger>
@@ -348,6 +397,28 @@ export default function FoodSection({ currentUser }: FoodSectionProps) {
         </TabsContent>
 
         <TabsContent value="orders" className="space-y-4">
+          <div className="space-y-3">
+            {orders.length === 0 ? (
+              <div className="text-sm text-gray-600">No orders yet.</div>
+            ) : (
+              orders.map((order) => (
+                <Card key={order.id}>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Order #{order.id}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between text-sm">
+                      <div>
+                        <div>{order.items?.map((i: any) => `${i.name} x${i.quantity}`).join(', ')}</div>
+                        <div className="text-gray-500">Status: {order.status}</div>
+                      </div>
+                      <div className="font-semibold">₹{order.total}</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
           <Card>
             <CardHeader>
               <CardTitle>Order History</CardTitle>

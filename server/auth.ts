@@ -9,12 +9,13 @@ export interface AuthenticatedRequest extends Request {
     id: number;
     username: string;
     email: string;
+    role: 'admin' | 'superuser' | 'user';
   };
 }
 
-export function generateToken(userId: number, username: string, email: string): string {
+export function generateToken(userId: number, username: string, email: string, role: 'admin' | 'superuser' | 'user'): string {
   return jwt.sign(
-    { id: userId, username, email },
+    { id: userId, username, email, role },
     JWT_SECRET,
     { expiresIn: '30d' }
   );

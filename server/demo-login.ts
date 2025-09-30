@@ -9,6 +9,7 @@ export function setupDemoLogin(app: Express) {
       id: 1,
       username: 'alex_johnson',
       email: 'alex@example.com',
+      role: 'admin' as const,
       avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
       bio: 'Product Designer',
       status: 'online',
@@ -23,7 +24,7 @@ export function setupDemoLogin(app: Express) {
     };
     
     // Generate token
-    const token = generateToken(demoUser.id, demoUser.username, demoUser.email);
+    const token = generateToken(demoUser.id, demoUser.username, demoUser.email, demoUser.role);
     
     res.status(200).json({
       user: demoUser,

@@ -6,9 +6,11 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
+  phone: text("phone").notNull(),
   password: text("password").notNull(),
   avatar: text("avatar"),
   status: text("status").notNull().default("offline"), // online, offline, away
+  role: text("role").notNull().default("user"), // admin, superuser, user
   bio: text("bio"),
   about: text("about"),
   lastSeen: timestamp("last_seen").defaultNow(),
@@ -38,6 +40,16 @@ export const messages = pgTable("messages", {
   userId: integer("user_id").notNull(),
   content: text("content").notNull(),
   type: text("type").notNull().default("text"), // text, image, file
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Chat requests: send first message which receiver must accept
+export const chatRequests = pgTable("chat_requests", {
+  id: serial("id").primaryKey(),
+  senderId: integer("sender_id").notNull(),
+  receiverId: integer("receiver_id").notNull(),
+  content: text("content").notNull(),
+  status: text("status").notNull().default("pending"), // pending, accepted, rejected
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -127,6 +139,7 @@ export const postLikes = pgTable("post_likes", {
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   email: true,
+  phone: true,
   password: true,
   avatar: true,
   bio: true,
@@ -161,6 +174,12 @@ export const insertConversationSchema = createInsertSchema(conversations).pick({
   memberCount: true,
 });
 
+export const insertChatRequestSchema = createInsertSchema(chatRequests).pick({
+  senderId: true,
+  receiverId: true,
+  content: true,
+});
+
 export const insertMessageSchema = createInsertSchema(messages).pick({
   conversationId: true,
   userId: true,
@@ -185,6 +204,7 @@ export const insertPostSchema = createInsertSchema(posts).pick({
   imageUrl: true,
   tags: true,
 });
+
 
 export const insertFoodOrderSchema = createInsertSchema(foodOrders).pick({
   userId: true,
@@ -217,3 +237,5 @@ export type FoodOrder = typeof foodOrders.$inferSelect;
 export type InsertFoodOrder = z.infer<typeof insertFoodOrderSchema>;
 export type TravelBooking = typeof travelBookings.$inferSelect;
 export type InsertTravelBooking = z.infer<typeof insertTravelBookingSchema>;
+export type ChatRequest = typeof chatRequests.$inferSelect;
+export type InsertChatRequest = z.infer<typeof insertChatRequestSchema>;

@@ -62,6 +62,15 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async updateUserRole(id: number, role: 'user' | 'admin' | 'superuser'): Promise<User | undefined> {
+    const [user] = await db
+      .update(schema.users)
+      .set({ role })
+      .where(eq(schema.users.id, id))
+      .returning();
+    return user || undefined;
+  }
+
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(schema.users);
   }
@@ -186,6 +195,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(schema.foodOrders);
   }
 
+  async getFoodOrdersByUser(userId: number): Promise<schema.FoodOrder[]> {
+    return await db.select().from(schema.foodOrders).where(eq(schema.foodOrders.userId, userId));
+  }
+
   async createFoodOrder(order: schema.InsertFoodOrder): Promise<schema.FoodOrder> {
     const [row] = await db.insert(schema.foodOrders).values(order as any).returning();
     return row;
@@ -205,6 +218,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(schema.travelBookings);
   }
 
+  async getTravelBookingsByUser(userId: number): Promise<schema.TravelBooking[]> {
+    return await db.select().from(schema.travelBookings).where(eq(schema.travelBookings.userId, userId));
+  }
+
   async createTravelBooking(booking: schema.InsertTravelBooking): Promise<schema.TravelBooking> {
     const [row] = await db.insert(schema.travelBookings).values(booking as any).returning();
     return row;
@@ -215,6 +232,25 @@ export class DatabaseStorage implements IStorage {
       .update(schema.travelBookings)
       .set({ status })
       .where(eq(schema.travelBookings.id, id))
+      .returning();
+    return row || undefined;
+  }
+
+  // Chat Requests
+  async createChatRequest(req: schema.InsertChatRequest): Promise<schema.ChatRequest> {
+    const [row] = await db.insert(schema.chatRequests).values(req as any).returning();
+    return row;
+  }
+
+  async getIncomingChatRequests(userId: number): Promise<schema.ChatRequest[]> {
+    return await db.select().from(schema.chatRequests)
+      .where(eq(schema.chatRequests.receiverId, userId));
+  }
+
+  async updateChatRequestStatus(id: number, status: 'pending' | 'accepted' | 'rejected'): Promise<schema.ChatRequest | undefined> {
+    const [row] = await db.update(schema.chatRequests)
+      .set({ status })
+      .where(eq(schema.chatRequests.id, id))
       .returning();
     return row || undefined;
   }

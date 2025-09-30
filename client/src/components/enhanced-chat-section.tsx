@@ -40,11 +40,28 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
   const { data: messages = [] } = useQuery({
     queryKey: ["/api/conversations", selectedConversation, "messages"],
     enabled: !!selectedConversation,
+    queryFn: async () => {
+      const res = await fetch(`/api/conversations/${selectedConversation}/messages`);
+      if (!res.ok) return [];
+      return res.json();
+    },
     select: (data) => Array.isArray(data) ? data : [],
   });
 
   const { data: users = [] } = useQuery({
     queryKey: ["/api/users"],
+  });
+
+  // Incoming chat requests
+  const { data: chatRequests = [], refetch: refetchRequests } = useQuery({
+    queryKey: ["/api/chat-requests"],
+    queryFn: async () => {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch('/api/chat-requests', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    select: (data) => Array.isArray(data) ? data : [],
   });
 
   const sendMessageMutation = useMutation({
@@ -101,6 +118,7 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
   };
 
   const getLastMessage = (conversationId: number) => {
+    if (!Array.isArray(messages)) return undefined;
     const conversationMessages = messages.filter((m: any) => m.conversationId === conversationId);
     return conversationMessages[conversationMessages.length - 1];
   };
@@ -160,7 +178,7 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
               open={showNewChatDialog}
               onOpenChange={setShowNewChatDialog}
               currentUser={currentUser}
-              onConversationCreated={setSelectedConversation}
+              onRequestSent={() => refetchRequests()}
             />
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -172,6 +190,43 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
             />
           </div>
         </div>
+
+        {/* Requests */}
+        {chatRequests.length > 0 && (
+          <div className="p-2 border-b border-blue-200">
+            <h3 className="text-sm font-semibold mb-2">Message Requests</h3>
+            <div className="space-y-2">
+              {chatRequests.map((r: any) => {
+                const sender = users.find((u: any) => u.id === r.senderId);
+                return (
+                  <div key={r.id} className="p-2 rounded-lg bg-gray-50 flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-sm">{sender?.username || 'User'}:</div>
+                      <div className="text-sm text-gray-700 truncate max-w-[200px]">{r.content}</div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={async () => {
+                        const token = localStorage.getItem('auth_token');
+                        const res = await fetch(`/api/chat-requests/${r.id}/accept`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+                        if (res.ok) {
+                          const data = await res.json();
+                          setSelectedConversation(data.conversationId);
+                          refetchRequests();
+                          queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+                        }
+                      }}>Accept</Button>
+                      <Button size="sm" variant="destructive" onClick={async () => {
+                        const token = localStorage.getItem('auth_token');
+                        const res = await fetch(`/api/chat-requests/${r.id}/reject`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+                        if (res.ok) refetchRequests();
+                      }}>Reject</Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <ScrollArea className="flex-1">
           <div className="p-2 space-y-1">
@@ -245,11 +300,11 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
                   </Button>
                   <Avatar className="h-10 w-10">
                     <AvatarFallback className="bg-gradient-to-r from-green-500 to-blue-500 text-white">
-                      {getConversationName(selectedConv)[0]?.toUpperCase()}
+                      {(selectedConv ? getConversationName(selectedConv) : '?')[0]?.toUpperCase?.() || '?'}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h3 className="font-semibold">{getConversationName(selectedConv)}</h3>
+                    <h3 className="font-semibold">{selectedConv ? getConversationName(selectedConv) : '...'}</h3>
                     <p className="text-sm text-gray-600">
                       {selectedConv?.type === "group" 
                         ? `${selectedConv.memberCount} members` 
@@ -372,9 +427,9 @@ export default function EnhancedChatSection({ currentUser, lastMessage, sendMess
         open={showNewChatDialog}
         onOpenChange={setShowNewChatDialog}
         currentUser={currentUser}
-        onChatCreated={(conversationId) => {
-          setSelectedConversation(conversationId);
+        onRequestSent={() => {
           setShowNewChatDialog(false);
+          refetchRequests();
         }}
       />
     </div>

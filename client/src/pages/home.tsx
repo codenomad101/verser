@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import SimpleChat from "@/components/simple-chat";
+import EnhancedChatSection from "@/components/enhanced-chat-section";
 import CommunitiesSection from "@/components/communities-section";
 import DiscoverySection from "@/components/discovery-section";
 import EnhancedDiscovery from "@/components/enhanced-discovery";
@@ -31,8 +31,8 @@ export default function Home() {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [lastMessage, setLastMessage] = useState<any>(null);
 
-  // Check if user is admin by configured email or username 'admin'
-  const isAdmin = !!user && (user.username === 'admin' || user.email === 'admin@example.com');
+  // Check admin by role (admin or superuser)
+  const isAdmin = !!user && ((user as any).role === 'admin' || (user as any).role === 'superuser');
 
   const searchRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
@@ -186,7 +186,7 @@ export default function Home() {
     switch (activeSection) {
       case "chat":
         return (
-          <SimpleChat 
+          <EnhancedChatSection 
             currentUser={currentUser}
             lastMessage={lastMessage}
             sendMessage={sendMessage}

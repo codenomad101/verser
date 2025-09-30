@@ -43,8 +43,8 @@ export default function Sidebar({
   const [, setLocation] = useLocation();
   const [showSettings, setShowSettings] = useState(false);
 
-  // Check if user is admin by configured email or username 'admin'
-  const isAdmin = !!user && (user.username === 'admin' || user.email === 'admin@example.com');
+  // Role-based admin check (admin or superuser)
+  const isAdmin = !!user && (((user as any).role === 'admin') || ((user as any).role === 'superuser'));
 
   const menuItems = [
     { id: "chat" as const, icon: MessageSquare, label: "Chat", notifications: 3 },

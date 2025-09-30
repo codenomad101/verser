@@ -5,6 +5,14 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import NotificationsSection from "@/components/notifications-section";
 import { useQuery } from "@tanstack/react-query";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface TopNavigationProps {
   activeSection: string;
@@ -12,12 +20,14 @@ interface TopNavigationProps {
 }
 
 export default function TopNavigation({ activeSection, onSectionChange }: TopNavigationProps) {
-  const { user } = useAuth();
+  const { user, logoutMutation } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const isSuperuser = user?.role === 'superuser';
+  const isAdmin = user?.role === 'admin' || isSuperuser;
 
   const navigationItems = [
-    { id: "chat", icon: MessageSquare, label: "Chat", notifications: 3 },
+    { id: "chat", icon: MessageSquare, label: "Chat", notifications: 0 },
     { id: "communities", icon: Users, label: "Communities", notifications: 0 },
     { id: "discovery", icon: Compass, label: "Discovery", notifications: 0 },
     { id: "verserpay", icon: CreditCard, label: "VerserPay", notifications: 0 },
@@ -142,27 +152,50 @@ export default function TopNavigation({ activeSection, onSectionChange }: TopNav
             {/* Notifications */}
             <NotificationsSection />
 
-            {/* Profile */}
-            <Button
-              variant={activeSection === "profile" ? "default" : "ghost"}
-              onClick={() => onSectionChange("profile")}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${
-                activeSection === "profile" 
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white' 
-                  : 'hover:bg-gray-100'
-              }`}
-            >
-              {user?.avatar ? (
-                <img 
-                  src={user.avatar} 
-                  alt={user.username}
-                  className="h-6 w-6 rounded-full object-cover"
-                />
-              ) : (
-                <User className="h-5 w-5" />
-              )}
-              <span className="hidden sm:block font-medium">{user?.username}</span>
-            </Button>
+            {/* Profile Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant={activeSection === "profile" ? "default" : "ghost"}
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${
+                    activeSection === "profile" 
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white' 
+                      : 'hover:bg-gray-100'
+                  }`}
+                >
+                  {user?.avatar ? (
+                    <img 
+                      src={user.avatar} 
+                      alt={user.username}
+                      className="h-6 w-6 rounded-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-5 w-5" />
+                  )}
+                  <span className="hidden sm:block font-medium">{user?.username}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  Signed in as {user?.username}
+                </DropdownMenuLabel>
+                <DropdownMenuItem disabled>
+                  Role: {user?.role || 'user'}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onSectionChange('profile'); }}>Profile</DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onSectionChange('settings'); }}>Settings</DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); localStorage.setItem('foodTab','orders'); onSectionChange('food'); }}>My Orders</DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); localStorage.setItem('travelTab','mybookings'); onSectionChange('travel'); }}>My Bookings</DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem onSelect={(e) => { e.preventDefault(); window.location.href = '/admin'; }}>Admin Dashboard</DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); logoutMutation.mutate(); }} className="text-red-600 focus:text-red-700">
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>

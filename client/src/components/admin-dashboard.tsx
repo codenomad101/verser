@@ -94,6 +94,7 @@ export function AdminDashboard() {
   const [bookings, setBookings] = useState<TravelBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSuperuser, setIsSuperuser] = useState(false);
 
   useEffect(() => {
     fetchAdminData();
@@ -117,6 +118,16 @@ export function AdminDashboard() {
       if (usersRes.ok) setUsers(await usersRes.json());
       if (postsRes.ok) setPosts(await postsRes.json());
       if (communitiesRes.ok) setCommunities(await communitiesRes.json());
+
+      // Check current user role
+      const meToken = localStorage.getItem('auth_token');
+      if (meToken) {
+        const meRes = await fetch('/api/auth/me', { headers: { 'Authorization': `Bearer ${meToken}` } });
+        if (meRes.ok) {
+          const me = await meRes.json();
+          setIsSuperuser(me.role === 'superuser');
+        }
+      }
       if (ordersRes.ok) setOrders(await ordersRes.json());
       if (bookingsRes.ok) setBookings(await bookingsRes.json());
     } catch (error) {
@@ -145,6 +156,25 @@ export function AdminDashboard() {
       }
     } catch (error) {
       console.error('Failed to update user status:', error);
+    }
+  };
+
+  const updateUserRole = async (userId: number, role: 'user' | 'admin' | 'superuser') => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/superuser/users/${userId}/role`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ role })
+      });
+      if (response.ok) {
+        setUsers(users.map(u => u.id === userId ? { ...u, role } : u));
+      }
+    } catch (e) {
+      console.error('Failed to update role');
     }
   };
 
@@ -302,6 +332,7 @@ export function AdminDashboard() {
                   <TableRow>
                     <TableHead>User</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Role</TableHead>
                     <TableHead>Joined</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -330,6 +361,21 @@ export function AdminDashboard() {
                         <Badge variant={user.status === 'online' ? 'default' : 'secondary'}>
                           {user.status}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {isSuperuser ? (
+                          <select
+                            className="border rounded px-2 py-1 text-sm"
+                            value={(user as any).role || 'user'}
+                            onChange={(e) => updateUserRole(user.id, e.target.value as any)}
+                          >
+                            <option value="user">user</option>
+                            <option value="admin">admin</option>
+                            <option value="superuser">superuser</option>
+                          </select>
+                        ) : (
+                          <Badge variant="secondary">{(user as any).role || 'user'}</Badge>
+                        )}
                       </TableCell>
                       <TableCell>
                         {new Date(user.createdAt).toLocaleDateString()}

@@ -2,6 +2,8 @@ import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { storage } from './storage';
+import { hashPassword } from './auth';
 
 const app = express();
 app.use(express.json());
@@ -37,6 +39,48 @@ app.use((req, res, next) => {
   next();
 });
 
+async function seedUsers() {
+  try {
+    // Seed admin
+    const adminEmail = process.env.ADMIN_SEED_EMAIL || 'admin@example.com';
+    const superEmail = process.env.SUPERUSER_SEED_EMAIL || 'superuser@example.com';
+
+    const existingAdmin = await storage.getUserByEmail(adminEmail);
+    if (!existingAdmin) {
+      const adminPass = await hashPassword(process.env.ADMIN_SEED_PASSWORD || 'admin123');
+      const admin = await storage.createUser({
+        username: 'admin',
+        email: adminEmail,
+        phone: '0000000001',
+        password: adminPass,
+        bio: 'Admin user',
+        about: '',
+        avatar: undefined,
+      } as any);
+      await storage.updateUserRole(admin.id, 'admin');
+      log(`Seeded admin user ${adminEmail}`);
+    }
+
+    const existingSuper = await storage.getUserByEmail(superEmail);
+    if (!existingSuper) {
+      const superPass = await hashPassword(process.env.SUPERUSER_SEED_PASSWORD || 'super123');
+      const superuser = await storage.createUser({
+        username: 'superuser',
+        email: superEmail,
+        phone: '0000000002',
+        password: superPass,
+        bio: 'Superuser account',
+        about: '',
+        avatar: undefined,
+      } as any);
+      await storage.updateUserRole(superuser.id, 'superuser');
+      log(`Seeded superuser ${superEmail}`);
+    }
+  } catch (e) {
+    log(`Seeding users failed: ${(e as Error).message}`);
+  }
+}
+
 (async () => {
   const server = await registerRoutes(app);
 
@@ -47,6 +91,8 @@ app.use((req, res, next) => {
     res.status(status).json({ message });
     throw err;
   });
+
+  await seedUsers();
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route

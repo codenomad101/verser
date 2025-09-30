@@ -11,6 +11,7 @@ type User = {
   id: number;
   username: string;
   email: string;
+  role: 'admin' | 'superuser' | 'user';
   avatar?: string | null;
   bio?: string | null;
   about?: string | null;
@@ -29,6 +30,7 @@ type LoginData = {
 type RegisterData = {
   username: string;
   email: string;
+  phone: string;
   password: string;
   bio?: string;
   about?: string;
@@ -168,6 +170,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Logged out",
         description: "You have been logged out successfully",
       });
+      // Force redirect to auth page to avoid any stale UI state
+      window.location.href = '/auth';
     },
     onError: (error: Error) => {
       localStorage.removeItem('auth_token');
@@ -176,6 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Logout completed",
         description: "You have been logged out",
       });
+      window.location.href = '/auth';
     },
   });
 

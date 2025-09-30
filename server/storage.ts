@@ -1,4 +1,4 @@
-import { users, conversations, messages, communities, posts, foodOrders, travelBookings, type User, type InsertUser, type Conversation, type InsertConversation, type Message, type InsertMessage, type Community, type InsertCommunity, type Post, type InsertPost, type FoodOrder, type InsertFoodOrder, type TravelBooking, type InsertTravelBooking } from "@shared/schema";
+import { users, conversations, messages, communities, posts, foodOrders, travelBookings, chatRequests, type User, type InsertUser, type Conversation, type InsertConversation, type Message, type InsertMessage, type Community, type InsertCommunity, type Post, type InsertPost, type FoodOrder, type InsertFoodOrder, type TravelBooking, type InsertTravelBooking, type ChatRequest, type InsertChatRequest } from "@shared/schema";
 
 export interface IStorage {
   // Users
@@ -8,6 +8,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUserStatus(id: number, status: string): Promise<User | undefined>;
   updateUserSettings(id: number, settings: Partial<User>): Promise<User | undefined>;
+  updateUserRole(id: number, role: 'user' | 'admin' | 'superuser'): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
   getUserPosts(userId: number): Promise<Post[]>;
 
@@ -37,13 +38,20 @@ export interface IStorage {
 
   // Food Orders
   getAllFoodOrders(): Promise<FoodOrder[]>;
+  getFoodOrdersByUser(userId: number): Promise<FoodOrder[]>;
   createFoodOrder(order: InsertFoodOrder): Promise<FoodOrder>;
   updateFoodOrderStatus(id: number, status: string): Promise<FoodOrder | undefined>;
 
   // Travel Bookings
   getAllTravelBookings(): Promise<TravelBooking[]>;
+  getTravelBookingsByUser(userId: number): Promise<TravelBooking[]>;
   createTravelBooking(booking: InsertTravelBooking): Promise<TravelBooking>;
   updateTravelBookingStatus(id: number, status: string): Promise<TravelBooking | undefined>;
+
+  // Chat Requests
+  createChatRequest(req: InsertChatRequest): Promise<ChatRequest>;
+  getIncomingChatRequests(userId: number): Promise<ChatRequest[]>;
+  updateChatRequestStatus(id: number, status: 'pending' | 'accepted' | 'rejected'): Promise<ChatRequest | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -61,6 +69,8 @@ export class MemStorage implements IStorage {
   private currentPostId: number;
   private currentFoodOrderId: number;
   private currentTravelBookingId: number;
+  private chatRequests: Map<number, ChatRequest>;
+  private currentChatRequestId: number;
 
   constructor() {
     this.users = new Map();
@@ -77,6 +87,8 @@ export class MemStorage implements IStorage {
     this.currentPostId = 1;
     this.currentFoodOrderId = 1;
     this.currentTravelBookingId = 1;
+    this.chatRequests = new Map();
+    this.currentChatRequestId = 1;
 
     // Initialize with some sample data
     this.initializeData();
@@ -88,10 +100,12 @@ export class MemStorage implements IStorage {
       id: 2,
       username: "chat_tester",
       email: "tester@example.com",
+      phone: "0000000000",
       password: "password123",
       avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face",
       bio: "Test user for chat functionality",
       status: "online",
+      role: "user",
       lastSeen: new Date(),
       showLastSeen: true,
       showOnlineStatus: true,
@@ -351,9 +365,21 @@ export class MemStorage implements IStorage {
     return undefined;
   }
 
+  async updateUserRole(id: number, role: 'user' | 'admin' | 'superuser'): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+    const updated = { ...user, role } as User;
+    this.users.set(id, updated);
+    return updated;
+  }
+
   // Food Orders
   async getAllFoodOrders(): Promise<FoodOrder[]> {
     return Array.from(this.foodOrders.values());
+  }
+
+  async getFoodOrdersByUser(userId: number): Promise<FoodOrder[]> {
+    return Array.from(this.foodOrders.values()).filter(o => o.userId === userId);
   }
 
   async createFoodOrder(order: InsertFoodOrder): Promise<FoodOrder> {
@@ -383,6 +409,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.travelBookings.values());
   }
 
+  async getTravelBookingsByUser(userId: number): Promise<TravelBooking[]> {
+    return Array.from(this.travelBookings.values()).filter(b => b.userId === userId);
+  }
+
   async createTravelBooking(booking: InsertTravelBooking): Promise<TravelBooking> {
     const id = this.currentTravelBookingId++;
     const newBooking: TravelBooking = {
@@ -407,6 +437,26 @@ export class MemStorage implements IStorage {
     if (!existing) return undefined;
     const updated = { ...existing, status } as TravelBooking;
     this.travelBookings.set(id, updated);
+    return updated;
+  }
+
+  // Chat Requests
+  async createChatRequest(req: InsertChatRequest): Promise<ChatRequest> {
+    const id = this.currentChatRequestId++;
+    const row: ChatRequest = { id, status: 'pending', createdAt: new Date(), ...req } as any;
+    this.chatRequests.set(id, row);
+    return row;
+  }
+
+  async getIncomingChatRequests(userId: number): Promise<ChatRequest[]> {
+    return Array.from(this.chatRequests.values()).filter(r => r.receiverId === userId);
+  }
+
+  async updateChatRequestStatus(id: number, status: 'pending' | 'accepted' | 'rejected'): Promise<ChatRequest | undefined> {
+    const r = this.chatRequests.get(id);
+    if (!r) return undefined;
+    const updated = { ...r, status } as ChatRequest;
+    this.chatRequests.set(id, updated);
     return updated;
   }
 }
