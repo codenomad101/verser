@@ -1,0 +1,9 @@
+export { AuthController } from './authController';
+export { UserController } from './userController';
+export { ConversationController } from './conversationController';
+export { CommunityController } from './communityController';
+export { PostController } from './postController';
+export { FoodController } from './foodController';
+export { TravelController } from './travelController';
+export { AdminController } from './adminController';
+export { SearchController } from './searchController';
