@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { DarkModeProvider } from "@/hooks/use-dark-mode";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
+import { NewHomePage } from "@/pages/new-home-page";
 import AuthPage from "@/pages/auth-page";
 import SimpleAuth from "@/pages/simple-auth";
 import { AdminPage } from "@/pages/admin-page";
@@ -85,7 +86,7 @@ function Router() {
       <Route path="/community/:id/manage" component={() => <ProtectedRoute component={() => <CommunityManagePage />} />} />
       <Route path="/discovery" component={() => <ProtectedRoute component={DiscoveryPage} />} />
       <Route path="/discovery/home" component={() => <ProtectedRoute component={DiscoveryHomePage} />} />
-      <Route path="/" component={() => user ? <Home /> : <LandingPage />} />
+      <Route path="/" component={() => user ? <NewHomePage /> : <LandingPage />} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -36,12 +36,15 @@ import {
   Image,
   Music,
   Camera,
-  Sparkles
+  Sparkles,
+  Zap
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { useDarkMode } from '@/hooks/use-dark-mode';
 import { ContentCreationDialog } from '@/components/content-creation-dialog';
+import { UniversalHeader } from '@/components/universal-header';
+import { UniversalFooter } from '@/components/universal-footer';
 
 export function DiscoveryHomePage() {
   const { user, logoutMutation } = useAuth();
@@ -54,6 +57,7 @@ export function DiscoveryHomePage() {
   const [playingVideo, setPlayingVideo] = useState<number | null>(null);
   const [showContentDialog, setShowContentDialog] = useState(false);
   const [contentDialogType, setContentDialogType] = useState<'post' | 'short' | 'video'>('post');
+  const [isScrolled, setIsScrolled] = useState(false);
 
   // Simple time formatting function
   const formatTimeAgo = (date: Date) => {
@@ -87,6 +91,15 @@ export function DiscoveryHomePage() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
+  }, []);
+
+  // Scroll effect for header
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Use auth context for logout
@@ -213,359 +226,201 @@ export function DiscoveryHomePage() {
   }
 
   return (
-    <div className={`min-h-screen font-inter ${isDarkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50'}`}>
-      {/* Top Navigation Card */}
-      <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-lg border-b`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Left Side - Logo and Navigation */}
-            <div className="flex items-center space-x-8">
-              {/* Logo */}
-              <div className="flex items-center space-x-2">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white text-xl font-bold">V</span>
-                </div>
-                <div>
-                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    Verser
-                  </span>
-                  <p className="text-xs text-gray-500 -mt-1">Connect • Discover • Share</p>
-                </div>
-              </div>
-
-              {/* Navigation Items */}
-              <div className="flex items-center space-x-6">
-                <button
-                  onClick={() => setLocation('/communities')}
-                  className={`relative px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                    window.location.pathname === '/communities' || window.location.pathname === '/communities/home'
-                      ? 'text-blue-600'
-                      : isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <span>Communities</span>
-                  </div>
-                </button>
-                <button
-                  onClick={() => setLocation('/discovery')}
-                  className={`relative px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                    window.location.pathname === '/discovery' || window.location.pathname === '/discovery/home'
-                      ? 'text-blue-600'
-                      : isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <span>Discovery</span>
-                  </div>
-                  {/* Underline indicator */}
-                  {(window.location.pathname === '/discovery' || window.location.pathname === '/discovery/home') && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full"></div>
-                  )}
-                </button>
-                <button
-                  onClick={() => setLocation('/preferences')}
-                  className={`relative px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                    window.location.pathname === '/preferences'
-                      ? 'text-blue-600'
-                      : isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
-                    </svg>
-                    <span>Preferences</span>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* Right Side - Dark Mode, Notifications and Profile */}
-            <div className="flex items-center space-x-4">
-              {/* Dark Mode Toggle */}
-              <button
-                onClick={toggleDarkMode}
-                className={`p-2 rounded-full transition-colors ${
-                  isDarkMode 
-                    ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-                title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-              >
-                {isDarkMode ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
-                )}
-              </button>
-
-              {/* Notifications */}
-              <div className="relative" ref={notificationsRef}>
-                <button
-                  onClick={() => setShowNotifications(!showNotifications)}
-                  className={`p-2 rounded-full transition-colors relative ${
-                    isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-                  }`}
-                >
-                  <Bell className={`w-6 h-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
-                </button>
-
-                {/* Notifications Dropdown */}
-                {showNotifications && (
-                  <div className={`absolute top-full right-0 mt-2 w-80 rounded-lg shadow-lg z-50 ${
-                    isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-                  } border`}>
-                    <div className={`p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                      <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Notifications</h3>
-                    </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {[
-                        { title: "New video from TechTutorials", time: "2 min ago", type: "video" },
-                        { title: "Sarah liked your post", time: "1 hour ago", type: "like" },
-                        { title: "Trending: React 18 Features", time: "2 hours ago", type: "trending" }
-                      ].map((notification, index) => (
-                        <div key={index} className={`p-4 border-b last:border-b-0 ${
-                          isDarkMode 
-                            ? 'hover:bg-gray-700 border-gray-700' 
-                            : 'hover:bg-gray-50 border-gray-100'
-                        }`}>
-                          <p className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{notification.title}</p>
-                          <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{notification.time}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Profile Avatar */}
-              <div className="relative" ref={profileRef}>
-                <button
-                  onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className={`flex items-center space-x-2 p-1 rounded-full transition-colors ${
-                    isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-                  }`}
-                >
-                  <img
-                    src={user.avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"}
-                    alt={user.username}
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                </button>
-
-                {/* Desktop Profile Dropdown Menu */}
-                {showProfileMenu && (
-                  <div className={`absolute top-full right-0 mt-2 w-48 rounded-lg shadow-lg z-50 ${
-                    isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-                  } border`}>
-                    <div className="py-2">
-                      <button
-                        onClick={() => {
-                          setShowProfileMenu(false);
-                          setLocation('/profile');
-                        }}
-                        className={`w-full flex items-center px-4 py-2 text-sm transition-colors ${
-                          isDarkMode 
-                            ? 'text-gray-300 hover:bg-gray-700' 
-                            : 'text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        <User className="w-4 h-4 mr-3 text-gray-500" />
-                        Profile
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowProfileMenu(false);
-                          setLocation('/settings');
-                        }}
-                        className={`w-full flex items-center px-4 py-2 text-sm transition-colors ${
-                          isDarkMode 
-                            ? 'text-gray-300 hover:bg-gray-700' 
-                            : 'text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        <Settings className="w-4 h-4 mr-3 text-gray-500" />
-                        Settings
-                      </button>
-                      {isAdmin && (
-                        <button
-                          onClick={() => {
-                            setShowProfileMenu(false);
-                            setLocation('/admin');
-                          }}
-                          className={`w-full flex items-center px-4 py-2 text-sm transition-colors ${
-                            isDarkMode 
-                              ? 'text-gray-300 hover:bg-gray-700' 
-                              : 'text-gray-700 hover:bg-gray-50'
-                          }`}
-                        >
-                          <Shield className="w-4 h-4 mr-3 text-red-500" />
-                          Admin Dashboard
-                        </button>
-                      )}
-                      <div className={`border-t my-1 ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}></div>
-                      <button
-                        onClick={handleLogout}
-                        disabled={logoutMutation.isPending}
-                        className={`w-full flex items-center px-4 py-2 text-sm transition-colors disabled:opacity-50 ${
-                          isDarkMode 
-                            ? 'text-red-400 hover:bg-red-900/20' 
-                            : 'text-red-600 hover:bg-red-50'
-                        }`}
-                      >
-                        <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className={`min-h-screen font-inter transition-all duration-500 ${
+      isDarkMode 
+        ? 'bg-gradient-to-br from-gray-900 via-blue-900/20 to-purple-900/20' 
+        : 'bg-gradient-to-br from-blue-50 via-purple-50/50 to-pink-50/50'
+    }`}>
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-32 w-80 h-80 bg-blue-200/10 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute -bottom-40 -left-32 w-80 h-80 bg-purple-200/10 rounded-full blur-3xl animate-pulse-slow delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-200/5 rounded-full blur-3xl animate-pulse-slow delay-500"></div>
       </div>
 
-      {/* Discovery Header */}
-      <div className="bg-gradient-to-r from-blue-800 to-blue-900 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Discovery</h1>
-              <p className="text-blue-100">Explore trending content and discover new creators</p>
+      {/* Universal Header */}
+      <UniversalHeader />
+
+      {/* Sticky Discovery Header */}
+      <div className={`sticky top-0 z-40 transition-all duration-500 ${
+        isScrolled 
+          ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl shadow-lg border-b border-gray-200/20' 
+          : 'bg-gradient-to-r from-blue-800 to-blue-900'
+      }`}>
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className={`transition-all duration-500 ${isScrolled ? 'scale-95 opacity-90' : 'scale-100'}`}>
+              <h1 className={`text-2xl font-bold transition-colors duration-500 ${
+                isScrolled ? 'text-gray-900 dark:text-white' : 'text-white'
+              }`}>
+                Discovery
+              </h1>
+              <p className={`transition-colors duration-500 ${
+                isScrolled ? 'text-gray-600 dark:text-gray-300' : 'text-blue-100'
+              }`}>
+                Explore trending content and discover new creators
+              </p>
             </div>
             <div className="relative">
               <Button
                 onClick={() => setShowContentDialog(true)}
-                className="bg-white text-blue-800 hover:bg-blue-50 font-semibold"
+                className={`font-semibold transition-all duration-300 hover:scale-105 active:scale-95 ${
+                  isScrolled
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl'
+                    : 'bg-white text-blue-800 hover:bg-blue-50 shadow-lg hover:shadow-xl'
+                }`}
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:rotate-90" />
                 Create Content
               </Button>
             </div>
           </div>
 
           {/* Content Type Tabs */}
-          <div className="flex items-center space-x-8">
-            <button
-              onClick={() => setSelectedTab('videos')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                selectedTab === 'videos' 
-                  ? 'bg-white/20 text-white' 
-                  : 'hover:bg-white/10 text-blue-100'
-              }`}
-            >
-              <Video className="h-4 w-4" />
-              <span>Videos</span>
-            </button>
-            <button
-              onClick={() => setSelectedTab('shorts')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                selectedTab === 'shorts' 
-                  ? 'bg-white/20 text-white' 
-                  : 'hover:bg-white/10 text-blue-100'
-              }`}
-            >
-              <Camera className="h-4 w-4" />
-              <span>Shorts</span>
-            </button>
-            <button
-              onClick={() => setSelectedTab('posts')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                selectedTab === 'posts' 
-                  ? 'bg-white/20 text-white' 
-                  : 'hover:bg-white/10 text-blue-100'
-              }`}
-            >
-              <Image className="h-4 w-4" />
-              <span>Posts</span>
-            </button>
+          <div className="flex items-center space-x-6">
+            {[
+              { id: 'videos', label: 'Videos', icon: Video },
+              { id: 'shorts', label: 'Shorts', icon: Camera },
+              { id: 'posts', label: 'Posts', icon: Image }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedTab(tab.id as any)}
+                className={`group flex items-center space-x-2 px-4 py-3 rounded-2xl transition-all duration-300 hover:scale-105 ${
+                  selectedTab === tab.id
+                    ? isScrolled
+                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 shadow-md'
+                      : 'bg-white/20 text-white backdrop-blur-sm shadow-lg'
+                    : isScrolled
+                    ? 'text-gray-600 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-800/50'
+                    : 'text-blue-100 hover:bg-white/10'
+                }`}
+              >
+                <tab.icon className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
+                <span className="font-medium">{tab.label}</span>
+                {selectedTab === tab.id && (
+                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-6 h-0.5 bg-current rounded-full"></div>
+                )}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Search Bar */}
+      <div className="relative max-w-7xl mx-auto px-4 py-8 z-10">
+        {/* Enhanced Search Bar */}
         <div className="mb-8">
-          <div className="relative max-w-2xl">
-            <Input
-              type="text"
-              placeholder="Search videos, creators, hashtags..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-12 text-lg"
-            />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+          <div className="relative max-w-2xl mx-auto">
+            <div className="relative">
+              <Input
+                type="text"
+                placeholder="Search videos, creators, hashtags..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 h-14 text-lg rounded-2xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-lg focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
+              />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 transition-colors duration-300" />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-300"
+                >
+                  ×
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Content Based on Selected Tab */}
         {selectedTab === 'videos' && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Trending Videos</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {videos.map((video) => (
-                <Card key={video.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="relative">
+          <div className="space-y-8">
+            <div className="flex items-center justify-between">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Trending Videos
+              </h2>
+              <div className="flex items-center space-x-2">
+                <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                  Live
+                </Badge>
+                <span className="text-sm text-gray-500">Updated just now</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {videos.map((video, index) => (
+                <Card 
+                  key={video.id} 
+                  className="group overflow-hidden border-0 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <div className="relative overflow-hidden">
                     <img
                       src={video.thumbnail}
                       alt={video.title}
-                      className="w-full h-48 object-cover"
+                      className="w-full h-48 object-cover transition-transform duration-700 group-hover:scale-110"
                     />
-                    <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
                       {video.duration}
                     </div>
-                    <div className="absolute top-2 right-2">
-                      <Button size="sm" variant="ghost" className="text-white hover:bg-black/20">
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
+                      <Button size="sm" variant="secondary" className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </div>
+                    <div className="absolute top-2 left-2">
+                      <Badge variant="secondary" className="bg-red-500/90 text-white backdrop-blur-sm">
+                        <Play className="h-3 w-3 mr-1" />
+                        LIVE
+                      </Badge>
+                    </div>
                   </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-lg mb-2 line-clamp-2">{video.title}</h3>
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Avatar className="h-8 w-8">
+                  <CardContent className="p-5">
+                    <h3 className="font-semibold text-lg mb-3 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
+                      {video.title}
+                    </h3>
+                    <div className="flex items-center space-x-3 mb-3">
+                      <Avatar className="h-9 w-9 ring-2 ring-white/20 transition-all duration-300 group-hover:ring-blue-500/30">
                         <AvatarImage src={video.creatorAvatar} />
-                        <AvatarFallback>{video.creator.charAt(0)}</AvatarFallback>
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                          {video.creator.charAt(0)}
+                        </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{video.creator}</p>
-                        <p className="text-xs text-gray-500">
-                          {video.views} views • {formatTimeAgo(video.publishedAt)}
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          {video.creator}
+                        </p>
+                        <p className="text-xs text-gray-500 flex items-center space-x-1">
+                          <Eye className="h-3 w-3" />
+                          <span>{video.views} views • {formatTimeAgo(video.publishedAt)}</span>
                         </p>
                       </div>
                       <Button
                         size="sm"
                         variant={video.isSubscribed ? "default" : "outline"}
-                        className="text-xs"
+                        className={`transition-all duration-300 ${
+                          video.isSubscribed 
+                            ? 'bg-green-500 hover:bg-green-600 text-white' 
+                            : 'border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white'
+                        }`}
                       >
                         {video.isSubscribed ? 'Subscribed' : 'Subscribe'}
                       </Button>
                     </div>
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      <button className="flex items-center space-x-1 hover:text-red-600">
-                        <ThumbsUp className="h-4 w-4" />
-                        <span>{video.likes.toLocaleString()}</span>
-                      </button>
-                      <button className="flex items-center space-x-1 hover:text-blue-600">
-                        <MessageCircle className="h-4 w-4" />
-                        <span>{video.comments}</span>
-                      </button>
-                      <button className="hover:text-green-600">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center space-x-4 text-gray-500">
+                        <button className="flex items-center space-x-1 hover:text-red-600 transition-colors duration-300 transform hover:scale-110">
+                          <ThumbsUp className="h-4 w-4" />
+                          <span>{video.likes.toLocaleString()}</span>
+                        </button>
+                        <button className="flex items-center space-x-1 hover:text-blue-600 transition-colors duration-300 transform hover:scale-110">
+                          <MessageCircle className="h-4 w-4" />
+                          <span>{video.comments}</span>
+                        </button>
+                      </div>
+                      <button className="text-gray-500 hover:text-green-600 transition-colors duration-300 transform hover:scale-110">
                         <Share className="h-4 w-4" />
                       </button>
                     </div>
@@ -577,47 +432,74 @@ export function DiscoveryHomePage() {
         )}
 
         {selectedTab === 'shorts' && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Trending Shorts</h2>
+          <div className="space-y-8">
+            <div className="flex items-center justify-between">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white bg-gradient-to-r from-red-500 to-pink-600 bg-clip-text text-transparent">
+                Trending Shorts
+              </h2>
+              <Badge variant="secondary" className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                <Zap className="h-3 w-3 mr-1" />
+                Viral
+              </Badge>
+            </div>
             <ScrollArea className="w-full">
-              <div className="flex space-x-4 pb-4">
-                {shorts.map((short) => (
-                  <Card key={short.id} className="w-80 flex-shrink-0 overflow-hidden hover:shadow-lg transition-shadow">
-                    <div className="relative">
+              <div className="flex space-x-6 pb-6">
+                {shorts.map((short, index) => (
+                  <Card 
+                    key={short.id} 
+                    className="w-80 flex-shrink-0 overflow-hidden border-0 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 group"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <div className="relative overflow-hidden">
                       <img
                         src={short.thumbnail}
                         alt={short.title}
-                        className="w-full h-96 object-cover"
+                        className="w-full h-96 object-cover transition-transform duration-700 group-hover:scale-110"
                       />
-                      <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                      <div className="absolute bottom-3 right-3 bg-black/80 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
                         <Play className="h-3 w-3 inline mr-1" />
                         Short
                       </div>
+                      <div className="absolute top-3 left-3">
+                        <Badge className="bg-gradient-to-r from-red-500 to-pink-600 text-white border-0">
+                          <TrendingUp className="h-3 w-3 mr-1" />
+                          Trending
+                        </Badge>
+                      </div>
                     </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold text-lg mb-2 line-clamp-2">{short.title}</h3>
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Avatar className="h-8 w-8">
+                    <CardContent className="p-5">
+                      <h3 className="font-semibold text-lg mb-3 line-clamp-2 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors duration-300">
+                        {short.title}
+                      </h3>
+                      <div className="flex items-center space-x-3 mb-4">
+                        <Avatar className="h-8 w-8 ring-2 ring-white/20">
                           <AvatarImage src={short.creatorAvatar} />
-                          <AvatarFallback>{short.creator.charAt(0)}</AvatarFallback>
+                          <AvatarFallback className="bg-gradient-to-br from-red-500 to-pink-600 text-white">
+                            {short.creator.charAt(0)}
+                          </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{short.creator}</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {short.creator}
+                          </p>
                           <p className="text-xs text-gray-500">
                             {short.views} views • {formatTimeAgo(short.publishedAt)}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <button className="flex items-center space-x-1 hover:text-red-600">
-                          <ThumbsUp className="h-4 w-4" />
-                          <span>{short.likes.toLocaleString()}</span>
-                        </button>
-                        <button className="flex items-center space-x-1 hover:text-blue-600">
-                          <MessageCircle className="h-4 w-4" />
-                          <span>{short.comments}</span>
-                        </button>
-                        <button className="hover:text-green-600">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center space-x-4 text-gray-500">
+                          <button className="flex items-center space-x-1 hover:text-red-600 transition-colors duration-300 transform hover:scale-110">
+                            <ThumbsUp className="h-4 w-4" />
+                            <span>{short.likes.toLocaleString()}</span>
+                          </button>
+                          <button className="flex items-center space-x-1 hover:text-blue-600 transition-colors duration-300 transform hover:scale-110">
+                            <MessageCircle className="h-4 w-4" />
+                            <span>{short.comments}</span>
+                          </button>
+                        </div>
+                        <button className="text-gray-500 hover:text-green-600 transition-colors duration-300 transform hover:scale-110">
                           <Share className="h-4 w-4" />
                         </button>
                       </div>
@@ -630,88 +512,119 @@ export function DiscoveryHomePage() {
         )}
 
         {selectedTab === 'posts' && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Trending Posts</h2>
+          <div className="space-y-8">
+            <div className="flex items-center justify-between">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white bg-gradient-to-r from-green-500 to-teal-600 bg-clip-text text-transparent">
+                Trending Posts
+              </h2>
+              <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                <Sparkles className="h-3 w-3 mr-1" />
+                Fresh
+              </Badge>
+            </div>
             {postsLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[...Array(6)].map((_, i) => (
-                  <Card key={i} className="animate-pulse">
+                  <Card key={i} className="animate-pulse border-0 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm">
                     <CardContent className="p-6">
-                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-                      <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
-                      <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
+                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-2"></div>
+                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
                     </CardContent>
                   </Card>
                 ))}
               </div>
             ) : filteredPosts.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Image className="h-8 w-8 text-gray-400" />
+              <div className="text-center py-16">
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-3xl flex items-center justify-center mx-auto mb-6 backdrop-blur-sm">
+                  <Image className="h-10 w-10 text-blue-500" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No posts found</h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">Be the first to share something amazing!</p>
-                <Button onClick={() => setLocation('/discovery/create')}>
-                  <Plus className="h-4 w-4 mr-2" />
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">No posts found</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                  Be the first to share something amazing with the community!
+                </p>
+                <Button 
+                  onClick={() => setLocation('/discovery/create')}
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  <Plus className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:rotate-90" />
                   Create Post
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredPosts.map((post: any) => (
-                  <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredPosts.map((post: any, index: number) => (
+                  <Card 
+                    key={post.id} 
+                    className="overflow-hidden border-0 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 group"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
                     {post.imageUrl && (
-                      <div className="relative">
+                      <div className="relative overflow-hidden">
                         <img
                           src={post.imageUrl}
                           alt="Post content"
-                          className="w-full h-48 object-cover"
+                          className="w-full h-48 object-cover transition-transform duration-700 group-hover:scale-110"
                         />
                         {post.type && post.type !== "text" && (
-                          <Badge className="absolute top-2 left-2" variant="secondary">
+                          <Badge className="absolute top-3 left-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-0">
                             {post.type.charAt(0).toUpperCase() + post.type.slice(1)}
                           </Badge>
                         )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       </div>
                     )}
-                    <CardContent className="p-4">
-                      <div className="flex items-center space-x-2 mb-3">
-                        <Avatar className="h-8 w-8">
+                    <CardContent className="p-5">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <Avatar className="h-9 w-9 ring-2 ring-white/20 transition-all duration-300 group-hover:ring-green-500/30">
                           <AvatarImage src={post.user?.avatar || ""} />
-                          <AvatarFallback>{post.user?.username?.charAt(0) || 'U'}</AvatarFallback>
+                          <AvatarFallback className="bg-gradient-to-br from-green-500 to-teal-600 text-white">
+                            {post.user?.username?.charAt(0) || 'U'}
+                          </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                             {post.user?.username || 'User'}
                           </p>
-                          <p className="text-xs text-gray-500">
-                            {formatTimeAgo(new Date(post.createdAt))}
+                          <p className="text-xs text-gray-500 flex items-center space-x-1">
+                            <Clock className="h-3 w-3" />
+                            <span>{formatTimeAgo(new Date(post.createdAt))}</span>
                           </p>
                         </div>
                       </div>
                       {post.title && (
-                        <h3 className="font-semibold text-lg mb-2 line-clamp-2">{post.title}</h3>
+                        <h3 className="font-semibold text-lg mb-3 line-clamp-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
+                          {post.title}
+                        </h3>
                       )}
-                      <p className="text-gray-700 dark:text-gray-300 mb-3 line-clamp-3">{post.content}</p>
+                      <p className="text-gray-700 dark:text-gray-300 mb-4 line-clamp-3 leading-relaxed">
+                        {post.content}
+                      </p>
                       {post.tags && post.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-3">
+                        <div className="flex flex-wrap gap-2 mb-4">
                           {post.tags.slice(0, 3).map((tag: string, index: number) => (
-                            <Badge key={index} variant="outline" className="text-xs">
+                            <Badge 
+                              key={index} 
+                              variant="outline" 
+                              className="text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 transition-colors duration-300 hover:bg-blue-100 dark:hover:bg-blue-900/30"
+                            >
                               #{tag}
                             </Badge>
                           ))}
                         </div>
                       )}
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <button className="flex items-center space-x-1 hover:text-red-600">
-                          <Heart className="h-4 w-4" />
-                          <span>{post.likes || 0}</span>
-                        </button>
-                        <button className="flex items-center space-x-1 hover:text-blue-600">
-                          <MessageCircle className="h-4 w-4" />
-                          <span>{post.comments || 0}</span>
-                        </button>
-                        <button className="hover:text-green-600">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center space-x-4 text-gray-500">
+                          <button className="flex items-center space-x-1 hover:text-red-600 transition-colors duration-300 transform hover:scale-110">
+                            <Heart className="h-4 w-4" />
+                            <span>{post.likes || 0}</span>
+                          </button>
+                          <button className="flex items-center space-x-1 hover:text-blue-600 transition-colors duration-300 transform hover:scale-110">
+                            <MessageCircle className="h-4 w-4" />
+                            <span>{post.comments || 0}</span>
+                          </button>
+                        </div>
+                        <button className="text-gray-500 hover:text-green-600 transition-colors duration-300 transform hover:scale-110">
                           <Share className="h-4 w-4" />
                         </button>
                       </div>
@@ -730,6 +643,9 @@ export function DiscoveryHomePage() {
         onClose={() => setShowContentDialog(false)}
         contentType={contentDialogType}
       />
+
+      {/* Universal Footer */}
+      <UniversalFooter />
     </div>
   );
 }

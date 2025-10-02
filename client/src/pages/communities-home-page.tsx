@@ -379,9 +379,6 @@ export function CommunitiesHomePage() {
     <div className={`min-h-screen font-inter flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50'}`}>
       {/* Universal Header */}
       <UniversalHeader 
-        showCreateButton={true}
-        createButtonText="Create Community"
-        onCreateClick={() => setShowNewCommunityDialog(true)}
         title="Communities"
         subtitle="Discover and connect with like-minded people"
       />

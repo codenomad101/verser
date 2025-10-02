@@ -18,8 +18,8 @@ import {
   Menu,
   X,
   ChevronDown,
-  Plus,
-  Home
+  Home,
+  Plus
 } from 'lucide-react';
 
 interface UniversalHeaderProps {
@@ -28,9 +28,6 @@ interface UniversalHeaderProps {
   onBackClick?: () => void;
   title?: string;
   subtitle?: string;
-  showCreateButton?: boolean;
-  createButtonText?: string;
-  onCreateClick?: () => void;
   showNotifications?: boolean;
   showProfileMenu?: boolean;
   className?: string;
@@ -42,9 +39,6 @@ export function UniversalHeader({
   onBackClick,
   title,
   subtitle,
-  showCreateButton = false,
-  createButtonText = "Create",
-  onCreateClick,
   showNotifications = true,
   showProfileMenu = true,
   className = ""
@@ -101,6 +95,7 @@ export function UniversalHeader({
 
   // Navigation items
   const navigationItems = [
+    { id: 'home', label: 'Home', path: '/', icon: Home },
     { id: 'discovery', label: 'Discovery', path: '/discovery/home', icon: Compass },
     { id: 'preferences', label: 'Preferences', path: '/preferences', icon: Settings },
   ];
@@ -147,6 +142,19 @@ export function UniversalHeader({
 
             {/* Navigation Items - Desktop */}
             <nav className="hidden md:flex items-center space-x-6">
+              {/* Home Button */}
+              <button
+                onClick={() => setLocation('/')}
+                className={`flex items-center space-x-2 px-3 py-2 text-sm font-medium transition-all duration-200 ${
+                  window.location.pathname === '/'
+                    ? 'text-blue-600 bg-blue-50 rounded-lg'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg'
+                }`}
+              >
+                <Home className="h-4 w-4" />
+                <span>Home</span>
+              </button>
+
               {/* Communities Dropdown */}
               <div className="relative" ref={communitiesRef}>
                 <button
@@ -200,7 +208,7 @@ export function UniversalHeader({
               </div>
 
               {/* Other Navigation Items */}
-              {navigationItems.map((item) => {
+              {navigationItems.filter(item => item.id !== 'home').map((item) => {
                 const Icon = item.icon;
                 const isActive = window.location.pathname === item.path;
                 
@@ -225,16 +233,6 @@ export function UniversalHeader({
 
           {/* Right Side */}
           <div className="flex items-center space-x-4">
-            {/* Create Button */}
-            {showCreateButton && (
-              <Button
-                onClick={onCreateClick}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-              >
-                {createButtonText}
-              </Button>
-            )}
-
             {/* Dark Mode Toggle */}
             <Button
               variant="ghost"
@@ -365,6 +363,27 @@ export function UniversalHeader({
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 py-4">
             <nav className="space-y-2">
+              {/* Home Button */}
+              <div className="space-y-1">
+                <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Main
+                </div>
+                <button
+                  onClick={() => {
+                    setLocation('/');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`flex items-center space-x-2 w-full px-3 py-2 text-sm font-medium transition-all duration-200 ${
+                    window.location.pathname === '/'
+                      ? 'text-blue-600 bg-blue-50 rounded-lg'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg'
+                  }`}
+                >
+                  <Home className="h-4 w-4" />
+                  <span>Home</span>
+                </button>
+              </div>
+
               {/* Communities Section */}
               <div className="space-y-1">
                 <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -407,7 +426,7 @@ export function UniversalHeader({
                 <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Navigation
                 </div>
-                {navigationItems.map((item) => {
+                {navigationItems.filter(item => item.id !== 'home').map((item) => {
                   const Icon = item.icon;
                   const isActive = window.location.pathname === item.path;
                   
