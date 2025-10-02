@@ -1,4 +1,5 @@
 import { users, conversations, messages, communities, posts, foodOrders, travelBookings, chatRequests, follows, blocks, communityMemberships, type User, type InsertUser, type Conversation, type InsertConversation, type Message, type InsertMessage, type Community, type InsertCommunity, type Post, type InsertPost, type FoodOrder, type InsertFoodOrder, type TravelBooking, type InsertTravelBooking, type ChatRequest, type InsertChatRequest, type Follow, type Block, type CommunityMembership, type InsertCommunityMembership } from "@shared/schema";
+import { hashPassword } from "./auth";
 
 export interface IStorage {
   // Users
@@ -36,6 +37,9 @@ export interface IStorage {
   getCommunityMembers(communityId: number): Promise<User[]>;
   isCommunityMember(userId: number, communityId: number): Promise<boolean>;
   getUserCommunityRole(userId: number, communityId: number): Promise<'admin' | 'maintainer' | 'member' | null>;
+  updateMemberRole(userId: number, communityId: number, role: string): Promise<void>;
+  deleteCommunity(communityId: number): Promise<void>;
+  updateCommunity(communityId: number, updateData: any): Promise<Community>;
 
   // Posts
   getPost(id: number): Promise<Post | undefined>;
@@ -123,10 +127,13 @@ export class MemStorage implements IStorage {
     this.currentCommunityMembershipId = 1;
 
     // Initialize with some sample data
-    this.initializeData();
+    this.initializeData().catch(console.error);
   }
 
-  private initializeData() {
+  private async initializeData() {
+    // Hash password for sample users
+    const hashedPassword = await hashPassword("password123");
+    
     // Add sample users for testing
     const sampleUsers: User[] = [
       {
@@ -134,7 +141,7 @@ export class MemStorage implements IStorage {
         username: "alex_johnson",
         email: "alex@example.com",
         phone: "0000000000",
-        password: "password123",
+        password: hashedPassword,
         avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
         bio: "Product Designer",
         about: "I love building web applications and sharing knowledge with the community. Always learning something new!",
@@ -155,7 +162,7 @@ export class MemStorage implements IStorage {
         username: "jane_smith",
         email: "jane@example.com",
         phone: "0000000001",
-        password: "password123",
+        password: hashedPassword,
         avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
         bio: "Full-stack developer passionate about creating amazing user experiences",
         about: "I love building web applications and sharing knowledge with the community. Always learning something new!",
@@ -176,7 +183,7 @@ export class MemStorage implements IStorage {
         username: "sarah_chen",
         email: "sarah@example.com",
         phone: "0000000002",
-        password: "password123",
+        password: hashedPassword,
         avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face",
         bio: "UI/UX Designer | Creative Director",
         about: "Designing beautiful and functional interfaces that users love. Always exploring new design trends and techniques.",
@@ -197,7 +204,7 @@ export class MemStorage implements IStorage {
         username: "mike_rodriguez",
         email: "mike@example.com",
         phone: "0000000003",
-        password: "password123",
+        password: hashedPassword,
         avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
         bio: "Startup Founder | Tech Entrepreneur",
         about: "Building the future of technology, one startup at a time. Passionate about innovation and helping others succeed.",
@@ -814,7 +821,49 @@ export class MemStorage implements IStorage {
     
     return membership ? membership.role as 'admin' | 'maintainer' | 'member' : null;
   }
+
+  async updateMemberRole(userId: number, communityId: number, role: string): Promise<void> {
+    const membership = Array.from(this.communityMemberships.values())
+      .find(m => m.userId === userId && m.communityId === communityId);
+    
+    if (membership) {
+      membership.role = role as 'admin' | 'maintainer' | 'member';
+    }
+  }
+
+  async deleteCommunity(communityId: number): Promise<void> {
+    // Remove community
+    this.communities.delete(communityId);
+    
+    // Remove all memberships for this community
+    const membershipsToDelete = Array.from(this.communityMemberships.values())
+      .filter(m => m.communityId === communityId);
+    
+    membershipsToDelete.forEach(membership => {
+      this.communityMemberships.delete(membership.id);
+    });
+    
+    // Remove all posts for this community
+    const postsToDelete = Array.from(this.posts.values())
+      .filter(p => p.communityId === communityId);
+    
+    postsToDelete.forEach(post => {
+      this.posts.delete(post.id);
+    });
+  }
+
+  async updateCommunity(communityId: number, updateData: any): Promise<Community> {
+    const community = this.communities.get(communityId);
+    if (!community) {
+      throw new Error('Community not found');
+    }
+    
+    const updatedCommunity = { ...community, ...updateData };
+    this.communities.set(communityId, updatedCommunity);
+    
+    return updatedCommunity;
+  }
 }
 
 import { DatabaseStorage } from "./db";
-export const storage = new DatabaseStorage();
+export const storage = new MemStorage();

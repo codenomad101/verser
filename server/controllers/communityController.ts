@@ -175,4 +175,111 @@ export class CommunityController {
       res.status(500).json({ message: 'Failed to fetch user role' });
     }
   }
+
+  static async checkMembership(req: AuthenticatedRequest, res: Response) {
+    try {
+      const communityId = parseInt(req.params.id);
+      const isMember = await storage.isCommunityMember(req.user.id, communityId);
+      
+      res.json({ isMember });
+    } catch (error) {
+      console.error('Check membership error:', error);
+      res.status(500).json({ message: 'Failed to check membership' });
+    }
+  }
+
+  static async updateMemberRole(req: AuthenticatedRequest, res: Response) {
+    try {
+      const communityId = parseInt(req.params.id);
+      const userId = parseInt(req.params.userId);
+      const { role } = req.body;
+
+      // Check if user has permission to update roles
+      const userRole = await storage.getUserCommunityRole(req.user.id, communityId);
+      if (!userRole || (userRole !== 'admin' && userRole !== 'maintainer')) {
+        return res.status(403).json({ message: 'Insufficient permissions' });
+      }
+
+      // Prevent non-admins from promoting to admin
+      if (role === 'admin' && userRole !== 'admin') {
+        return res.status(403).json({ message: 'Only admins can promote to admin' });
+      }
+
+      // Update member role
+      await storage.updateMemberRole(userId, communityId, role);
+      
+      res.json({ message: 'Member role updated successfully' });
+    } catch (error) {
+      console.error('Update member role error:', error);
+      res.status(500).json({ message: 'Failed to update member role' });
+    }
+  }
+
+  static async removeMember(req: AuthenticatedRequest, res: Response) {
+    try {
+      const communityId = parseInt(req.params.id);
+      const userId = parseInt(req.params.userId);
+
+      // Check if user has permission to remove members
+      const userRole = await storage.getUserCommunityRole(req.user.id, communityId);
+      if (!userRole || (userRole !== 'admin' && userRole !== 'maintainer')) {
+        return res.status(403).json({ message: 'Insufficient permissions' });
+      }
+
+      // Prevent removing admins unless you're an admin
+      const targetRole = await storage.getUserCommunityRole(userId, communityId);
+      if (targetRole === 'admin' && userRole !== 'admin') {
+        return res.status(403).json({ message: 'Only admins can remove other admins' });
+      }
+
+      // Remove member
+      await storage.leaveCommunity(userId, communityId);
+      
+      res.json({ message: 'Member removed successfully' });
+    } catch (error) {
+      console.error('Remove member error:', error);
+      res.status(500).json({ message: 'Failed to remove member' });
+    }
+  }
+
+  static async deleteCommunity(req: AuthenticatedRequest, res: Response) {
+    try {
+      const communityId = parseInt(req.params.id);
+
+      // Check if user is admin
+      const userRole = await storage.getUserCommunityRole(req.user.id, communityId);
+      if (userRole !== 'admin') {
+        return res.status(403).json({ message: 'Only admins can delete communities' });
+      }
+
+      // Delete community
+      await storage.deleteCommunity(communityId);
+      
+      res.json({ message: 'Community deleted successfully' });
+    } catch (error) {
+      console.error('Delete community error:', error);
+      res.status(500).json({ message: 'Failed to delete community' });
+    }
+  }
+
+  static async updateCommunity(req: AuthenticatedRequest, res: Response) {
+    try {
+      const communityId = parseInt(req.params.id);
+      const updateData = req.body;
+
+      // Check if user has permission to update community
+      const userRole = await storage.getUserCommunityRole(req.user.id, communityId);
+      if (!userRole || (userRole !== 'admin' && userRole !== 'maintainer')) {
+        return res.status(403).json({ message: 'Insufficient permissions' });
+      }
+
+      // Update community
+      const updatedCommunity = await storage.updateCommunity(communityId, updateData);
+      
+      res.json(updatedCommunity);
+    } catch (error) {
+      console.error('Update community error:', error);
+      res.status(500).json({ message: 'Failed to update community' });
+    }
+  }
 }

@@ -17,6 +17,8 @@ import { SettingsPage } from "@/pages/settings-page";
 import { PreferencesPage } from "@/pages/preferences-page";
 import { CommunitiesPage } from "@/pages/communities-page";
 import { CommunitiesHomePage } from "@/pages/communities-home-page";
+import { CommunityPage } from "@/pages/community-page";
+import { CommunityManagePage } from "@/pages/community-manage-page";
 import { DiscoveryPage } from "@/pages/discovery-page";
 import { DiscoveryHomePage } from "@/pages/discovery-home-page";
 import { LandingPage } from "@/pages/landing-page";
@@ -79,6 +81,8 @@ function Router() {
       <Route path="/preferences" component={() => <ProtectedRoute component={PreferencesPage} />} />
       <Route path="/communities" component={() => <ProtectedRoute component={CommunitiesPage} />} />
       <Route path="/communities/home" component={() => <ProtectedRoute component={CommunitiesHomePage} />} />
+      <Route path="/community/:id" component={() => <ProtectedRoute component={() => <CommunityPage />} />} />
+      <Route path="/community/:id/manage" component={() => <ProtectedRoute component={() => <CommunityManagePage />} />} />
       <Route path="/discovery" component={() => <ProtectedRoute component={DiscoveryPage} />} />
       <Route path="/discovery/home" component={() => <ProtectedRoute component={DiscoveryHomePage} />} />
       <Route path="/" component={() => user ? <Home /> : <LandingPage />} />

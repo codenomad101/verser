@@ -15,6 +15,13 @@ router.post('/:id/join', authenticateToken, CommunityController.joinCommunity);
 router.delete('/:id/leave', authenticateToken, CommunityController.leaveCommunity);
 router.get('/user/:userId', CommunityController.getUserCommunities);
 router.get('/:id/members', CommunityController.getCommunityMembers);
+router.get('/:id/membership', authenticateToken, CommunityController.checkMembership);
 router.get('/:id/role', authenticateToken, CommunityController.getUserCommunityRole);
+
+// Community management routes (admin/maintainer only)
+router.put('/:id/members/:userId/role', authenticateToken, CommunityController.updateMemberRole);
+router.delete('/:id/members/:userId', authenticateToken, CommunityController.removeMember);
+router.delete('/:id', authenticateToken, CommunityController.deleteCommunity);
+router.put('/:id', authenticateToken, CommunityController.updateCommunity);
 
 export default router;

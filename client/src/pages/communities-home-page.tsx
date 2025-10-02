@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Search, 
   Plus, 
@@ -358,9 +359,6 @@ export function CommunitiesHomePage() {
     <div className={`min-h-screen font-inter flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50'}`}>
       {/* Universal Header */}
       <UniversalHeader 
-        showSearch={true}
-        searchPlaceholder="Search communities..."
-        onSearchChange={setSearchQuery}
         showCreateButton={true}
         createButtonText="Create Community"
         onCreateClick={() => setShowNewCommunityDialog(true)}
@@ -370,6 +368,45 @@ export function CommunitiesHomePage() {
 
       {/* Main Content */}
       <div className="flex-1 max-w-7xl mx-auto px-4 py-8 space-y-8">
+        {/* Search and Filter Bar */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search communities..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    <SelectItem value="tech">Technology</SelectItem>
+                    <SelectItem value="design">Design</SelectItem>
+                    <SelectItem value="business">Business</SelectItem>
+                    <SelectItem value="lifestyle">Lifestyle</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                >
+                  {viewMode === 'grid' ? <List className="h-4 w-4" /> : <Grid3X3 className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Your Communities Section */}
         <div>
           <div className="flex items-center justify-between mb-6">
@@ -426,7 +463,7 @@ export function CommunitiesHomePage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.isArray(userCommunities) && userCommunities.map((community: any) => (
-                <Card key={community.id} className="hover:shadow-lg transition-shadow">
+                <Card key={community.id} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setLocation(`/community/${community.id}`)}>
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3">
@@ -464,7 +501,10 @@ export function CommunitiesHomePage() {
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => {/* TODO: Navigate to community management */}}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLocation(`/community/${community.id}/manage`);
+                            }}
                           >
                             <Settings className="h-4 w-4 mr-1" />
                             Manage
@@ -473,7 +513,10 @@ export function CommunitiesHomePage() {
                         <Button 
                           size="sm" 
                           variant="destructive"
-                          onClick={() => leaveCommunityMutation.mutate(community.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            leaveCommunityMutation.mutate(community.id);
+                          }}
                           disabled={leavingCommunityId === community.id}
                         >
                           {leavingCommunityId === community.id ? (
@@ -640,7 +683,7 @@ export function CommunitiesHomePage() {
           ) : (
             <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
               {filteredCommunities.map((community) => (
-                <Card key={community.id} className="hover:shadow-lg transition-shadow">
+                <Card key={community.id} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setLocation(`/community/${community.id}`)}>
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3">
@@ -676,7 +719,10 @@ export function CommunitiesHomePage() {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => joinCommunityMutation.mutate(community.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          joinCommunityMutation.mutate(community.id);
+                        }}
                         disabled={joiningCommunityId === community.id}
                       >
                         {joiningCommunityId === community.id ? (

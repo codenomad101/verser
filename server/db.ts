@@ -222,6 +222,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(schema.posts).where(eq(schema.posts.communityId, communityId));
   }
 
+  async getCommunityPosts(communityId: number): Promise<Post[]> {
+    return await db.select().from(schema.posts).where(eq(schema.posts.communityId, communityId));
+  }
+
   async getTrendingPosts(): Promise<Post[]> {
     return await db.select().from(schema.posts).where(eq(schema.posts.isTrending, true));
   }
@@ -320,5 +324,137 @@ export class DatabaseStorage implements IStorage {
       .where(eq(schema.chatRequests.id, id))
       .returning();
     return row || undefined;
+  }
+
+  // Follow/Block functionality
+  async followUser(followerId: number, followingId: number): Promise<void> {
+    await db.insert(schema.follows).values({
+      followerId,
+      followingId,
+    });
+  }
+
+  async unfollowUser(followerId: number, followingId: number): Promise<void> {
+    await db.delete(schema.follows).where(
+      and(
+        eq(schema.follows.followerId, followerId),
+        eq(schema.follows.followingId, followingId)
+      )
+    );
+  }
+
+  async blockUser(blockerId: number, blockedId: number): Promise<void> {
+    await db.insert(schema.blocks).values({
+      blockerId,
+      blockedId,
+    });
+  }
+
+  async unblockUser(blockerId: number, blockedId: number): Promise<void> {
+    await db.delete(schema.blocks).where(
+      and(
+        eq(schema.blocks.blockerId, blockerId),
+        eq(schema.blocks.blockedId, blockedId)
+      )
+    );
+  }
+
+  async getFollowers(userId: number): Promise<User[]> {
+    const followers = await db
+      .select({
+        id: schema.users.id,
+        username: schema.users.username,
+        email: schema.users.email,
+        avatar: schema.users.avatar,
+        bio: schema.users.bio,
+        location: schema.users.location,
+        website: schema.users.website,
+        followersCount: schema.users.followersCount,
+        followingCount: schema.users.followingCount,
+        postsCount: schema.users.postsCount,
+        createdAt: schema.users.createdAt,
+        updatedAt: schema.users.updatedAt,
+      })
+      .from(schema.users)
+      .innerJoin(schema.follows, eq(schema.follows.followerId, schema.users.id))
+      .where(eq(schema.follows.followingId, userId));
+    
+    return followers;
+  }
+
+  async getFollowing(userId: number): Promise<User[]> {
+    const following = await db
+      .select({
+        id: schema.users.id,
+        username: schema.users.username,
+        email: schema.users.email,
+        avatar: schema.users.avatar,
+        bio: schema.users.bio,
+        location: schema.users.location,
+        website: schema.users.website,
+        followersCount: schema.users.followersCount,
+        followingCount: schema.users.followingCount,
+        postsCount: schema.users.postsCount,
+        createdAt: schema.users.createdAt,
+        updatedAt: schema.users.updatedAt,
+      })
+      .from(schema.users)
+      .innerJoin(schema.follows, eq(schema.follows.followingId, schema.users.id))
+      .where(eq(schema.follows.followerId, userId));
+    
+    return following;
+  }
+
+  async getFollowStatus(followerId: number, followingId: number): Promise<boolean> {
+    const result = await db
+      .select()
+      .from(schema.follows)
+      .where(
+        and(
+          eq(schema.follows.followerId, followerId),
+          eq(schema.follows.followingId, followingId)
+        )
+      )
+      .limit(1);
+    
+    return result.length > 0;
+  }
+
+  async getBlockStatus(blockerId: number, blockedId: number): Promise<boolean> {
+    const result = await db
+      .select()
+      .from(schema.blocks)
+      .where(
+        and(
+          eq(schema.blocks.blockerId, blockerId),
+          eq(schema.blocks.blockedId, blockedId)
+        )
+      )
+      .limit(1);
+    
+    return result.length > 0;
+  }
+
+  async getBlockedUsers(userId: number): Promise<User[]> {
+    const blockedUsers = await db
+      .select({
+        id: schema.users.id,
+        username: schema.users.username,
+        email: schema.users.email,
+        avatar: schema.users.avatar,
+        bio: schema.users.bio,
+        location: schema.users.location,
+        website: schema.users.website,
+        followersCount: schema.users.followersCount,
+        followingCount: schema.users.followingCount,
+        postsCount: schema.users.postsCount,
+        createdAt: schema.users.createdAt,
+        updatedAt: schema.users.updatedAt,
+      })
+      .from(schema.users)
+      .innerJoin(schema.blocks, eq(schema.blocks.blockedId, schema.users.id))
+      .where(eq(schema.blocks.blockerId, userId));
+    
+    return blockedUsers;
   }
 }
