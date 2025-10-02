@@ -1,4 +1,4 @@
-import { users, conversations, messages, communities, posts, foodOrders, travelBookings, chatRequests, type User, type InsertUser, type Conversation, type InsertConversation, type Message, type InsertMessage, type Community, type InsertCommunity, type Post, type InsertPost, type FoodOrder, type InsertFoodOrder, type TravelBooking, type InsertTravelBooking, type ChatRequest, type InsertChatRequest } from "@shared/schema";
+import { users, conversations, messages, communities, posts, foodOrders, travelBookings, chatRequests, follows, blocks, communityMemberships, type User, type InsertUser, type Conversation, type InsertConversation, type Message, type InsertMessage, type Community, type InsertCommunity, type Post, type InsertPost, type FoodOrder, type InsertFoodOrder, type TravelBooking, type InsertTravelBooking, type ChatRequest, type InsertChatRequest, type Follow, type Block, type CommunityMembership, type InsertCommunityMembership } from "@shared/schema";
 
 export interface IStorage {
   // Users
@@ -27,6 +27,14 @@ export interface IStorage {
   getAllCommunities(): Promise<Community[]>;
   createCommunity(community: InsertCommunity): Promise<Community>;
   updateCommunityStats(id: number, memberCount?: number, onlineCount?: number): Promise<Community | undefined>;
+  
+  // Community Memberships
+  joinCommunity(userId: number, communityId: number, role?: 'admin' | 'maintainer' | 'member'): Promise<CommunityMembership>;
+  leaveCommunity(userId: number, communityId: number): Promise<boolean>;
+  getUserCommunities(userId: number): Promise<Community[]>;
+  getCommunityMembers(communityId: number): Promise<User[]>;
+  isCommunityMember(userId: number, communityId: number): Promise<boolean>;
+  getUserCommunityRole(userId: number, communityId: number): Promise<'admin' | 'maintainer' | 'member' | null>;
 
   // Posts
   getPost(id: number): Promise<Post | undefined>;
@@ -52,6 +60,17 @@ export interface IStorage {
   createChatRequest(req: InsertChatRequest): Promise<ChatRequest>;
   getIncomingChatRequests(userId: number): Promise<ChatRequest[]>;
   updateChatRequestStatus(id: number, status: 'pending' | 'accepted' | 'rejected'): Promise<ChatRequest | undefined>;
+
+  // Follow/Block functionality
+  followUser(followerId: number, followingId: number): Promise<Follow>;
+  unfollowUser(followerId: number, followingId: number): Promise<boolean>;
+  blockUser(blockerId: number, blockedId: number): Promise<Block>;
+  unblockUser(blockerId: number, blockedId: number): Promise<boolean>;
+  isFollowing(followerId: number, followingId: number): Promise<boolean>;
+  isBlocked(blockerId: number, blockedId: number): Promise<boolean>;
+  getFollowers(userId: number): Promise<User[]>;
+  getFollowing(userId: number): Promise<User[]>;
+  getBlockedUsers(userId: number): Promise<User[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -71,6 +90,12 @@ export class MemStorage implements IStorage {
   private currentTravelBookingId: number;
   private chatRequests: Map<number, ChatRequest>;
   private currentChatRequestId: number;
+  private follows: Map<number, Follow>;
+  private currentFollowId: number;
+  private blocks: Map<number, Block>;
+  private currentBlockId: number;
+  private communityMemberships: Map<number, CommunityMembership>;
+  private currentCommunityMembershipId: number;
 
   constructor() {
     this.users = new Map();
@@ -89,49 +114,154 @@ export class MemStorage implements IStorage {
     this.currentTravelBookingId = 1;
     this.chatRequests = new Map();
     this.currentChatRequestId = 1;
+    this.follows = new Map();
+    this.currentFollowId = 1;
+    this.blocks = new Map();
+    this.currentBlockId = 1;
+    this.communityMemberships = new Map();
+    this.currentCommunityMembershipId = 1;
 
     // Initialize with some sample data
     this.initializeData();
   }
 
   private initializeData() {
-    // Add one test user for chat testing
-    const testUser: User = {
-      id: 2,
-      username: "chat_tester",
-      email: "tester@example.com",
-      phone: "0000000000",
-      password: "password123",
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face",
-      bio: "Test user for chat functionality",
-      status: "online",
-      role: "user",
-      lastSeen: new Date(),
-      showLastSeen: true,
-      showOnlineStatus: true,
-      isVerified: false,
-      followersCount: 0,
-      followingCount: 0,
-      postCount: 0,
-      about: null,
-      createdAt: new Date()
-    };
-    this.users.set(2, testUser);
-    this.currentUserId = 3; // Start next user ID from 3
+    // Add sample users for testing
+    const sampleUsers: User[] = [
+      {
+        id: 1,
+        username: "alex_johnson",
+        email: "alex@example.com",
+        phone: "0000000000",
+        password: "password123",
+        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
+        bio: "Product Designer",
+        about: "I love building web applications and sharing knowledge with the community. Always learning something new!",
+        status: "online",
+        role: "admin",
+        lastSeen: new Date(),
+        showLastSeen: true,
+        showOnlineStatus: true,
+        isVerified: false,
+        followersCount: 1250,
+        followingCount: 890,
+        location: "San Francisco, CA",
+        website: "https://alexjohnson.dev",
+        createdAt: new Date()
+      },
+      {
+        id: 2,
+        username: "jane_smith",
+        email: "jane@example.com",
+        phone: "0000000001",
+        password: "password123",
+        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
+        bio: "Full-stack developer passionate about creating amazing user experiences",
+        about: "I love building web applications and sharing knowledge with the community. Always learning something new!",
+        status: "online",
+        role: "user",
+        lastSeen: new Date(),
+        showLastSeen: true,
+        showOnlineStatus: true,
+        isVerified: true,
+        followersCount: 1250,
+        followingCount: 340,
+        location: "San Francisco, CA",
+        website: "https://alexjohnson.dev",
+        createdAt: new Date()
+      },
+      {
+        id: 3,
+        username: "sarah_chen",
+        email: "sarah@example.com",
+        phone: "0000000002",
+        password: "password123",
+        avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face",
+        bio: "UI/UX Designer | Creative Director",
+        about: "Designing beautiful and functional interfaces that users love. Always exploring new design trends and techniques.",
+        status: "online",
+        role: "user",
+        lastSeen: new Date(),
+        showLastSeen: true,
+        showOnlineStatus: true,
+        isVerified: true,
+        followersCount: 890,
+        followingCount: 210,
+        location: "New York, NY",
+        website: "https://sarahchen.design",
+        createdAt: new Date()
+      },
+      {
+        id: 4,
+        username: "mike_rodriguez",
+        email: "mike@example.com",
+        phone: "0000000003",
+        password: "password123",
+        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
+        bio: "Startup Founder | Tech Entrepreneur",
+        about: "Building the future of technology, one startup at a time. Passionate about innovation and helping others succeed.",
+        status: "offline",
+        role: "user",
+        lastSeen: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+        showLastSeen: true,
+        showOnlineStatus: true,
+        isVerified: false,
+        followersCount: 567,
+        followingCount: 89,
+        location: "Austin, TX",
+        createdAt: new Date()
+      }
+    ];
+
+    sampleUsers.forEach(user => {
+      this.users.set(user.id, user);
+    });
+    this.currentUserId = 6; // Start next user ID from 6
 
     // Create sample communities
     const sampleCommunities: InsertCommunity[] = [
-      { name: "Web Developers", description: "A community for web developers", icon: "fas fa-code", color: "blue", memberCount: 2500, onlineCount: 45 },
-      { name: "UI/UX Designers", description: "Design community", icon: "fas fa-palette", color: "purple", memberCount: 1800, onlineCount: 32 },
-      { name: "Startup Founders", description: "Entrepreneurship discussions", icon: "fas fa-rocket", color: "green", memberCount: 987, onlineCount: 18 },
-      { name: "Photography", description: "Photo sharing and tips", icon: "fas fa-camera", color: "yellow", memberCount: 3200, onlineCount: 67 },
-      { name: "Digital Marketing", description: "Marketing strategies", icon: "fas fa-bullhorn", color: "red", memberCount: 1500, onlineCount: 28 },
+      { name: "Web Developers", description: "A community for web developers to share knowledge, ask questions, and collaborate on projects", icon: "fas fa-code", color: "blue", memberCount: 2500, onlineCount: 45 },
+      { name: "UI/UX Designers", description: "Design community for sharing inspiration, tools, and best practices", icon: "fas fa-palette", color: "purple", memberCount: 1800, onlineCount: 32 },
+      { name: "Startup Founders", description: "Entrepreneurship discussions, networking, and startup advice", icon: "fas fa-rocket", color: "green", memberCount: 987, onlineCount: 18 },
+      { name: "Photography", description: "Photo sharing, tips, and techniques for photographers of all levels", icon: "fas fa-camera", color: "yellow", memberCount: 3200, onlineCount: 67 },
+      { name: "Digital Marketing", description: "Marketing strategies, tools, and case studies", icon: "fas fa-bullhorn", color: "red", memberCount: 1500, onlineCount: 28 },
+      { name: "React Developers", description: "React.js community for developers working with React ecosystem", icon: "fas fa-code", color: "blue", memberCount: 4200, onlineCount: 89 },
+      { name: "Graphic Design", description: "Creative design community for graphic designers and artists", icon: "fas fa-palette", color: "purple", memberCount: 2100, onlineCount: 45 },
+      { name: "Tech Entrepreneurs", description: "Technology entrepreneurship and innovation discussions", icon: "fas fa-rocket", color: "green", memberCount: 1200, onlineCount: 25 },
+      { name: "Mobile Photography", description: "Mobile photography tips, tricks, and photo challenges", icon: "fas fa-camera", color: "yellow", memberCount: 3800, onlineCount: 78 },
+      { name: "Content Marketing", description: "Content creation, strategy, and marketing best practices", icon: "fas fa-bullhorn", color: "red", memberCount: 1900, onlineCount: 35 },
     ];
 
     sampleCommunities.forEach(community => {
       const id = this.currentCommunityId++;
       const newCommunity: Community = { ...community, id, createdAt: new Date() };
       this.communities.set(id, newCommunity);
+    });
+
+    // Add some sample community memberships
+    const sampleMemberships = [
+      { userId: 1, communityId: 1 }, // John Doe joins Web Developers
+      { userId: 1, communityId: 2 }, // John Doe joins UI/UX Designers
+      { userId: 2, communityId: 1 }, // Jane Smith joins Web Developers
+      { userId: 2, communityId: 3 }, // Jane Smith joins Startup Founders
+      { userId: 3, communityId: 2 }, // Alex Johnson joins UI/UX Designers
+      { userId: 3, communityId: 4 }, // Alex Johnson joins Photography
+      { userId: 4, communityId: 1 }, // Sarah Chen joins Web Developers
+      { userId: 4, communityId: 5 }, // Sarah Chen joins Digital Marketing
+      { userId: 5, communityId: 3 }, // Mike Rodriguez joins Startup Founders
+      { userId: 5, communityId: 4 }, // Mike Rodriguez joins Photography
+    ];
+
+    sampleMemberships.forEach(membership => {
+      const id = this.currentCommunityMembershipId++;
+      const newMembership: CommunityMembership = {
+        id,
+        userId: membership.userId,
+        communityId: membership.communityId,
+        role: 'member',
+        joinedAt: new Date()
+      };
+      this.communityMemberships.set(id, newMembership);
     });
 
     // Create sample posts
@@ -149,7 +279,7 @@ export class MemStorage implements IStorage {
         isTrending: true
       },
       {
-        userId: 4,
+        userId: 3,
         communityId: 1,
         title: "Building Real-time Applications: A Complete Guide",
         content: "Deep dive into WebSockets, Server-Sent Events, and modern real-time architectures. Perfect for developers looking to add live features to their applications.",
@@ -160,7 +290,7 @@ export class MemStorage implements IStorage {
         isTrending: false
       },
       {
-        userId: 1,
+        userId: 4,
         communityId: 3,
         title: "Lessons from Building a Remote-First Startup",
         content: "After 2 years of building our company with a fully distributed team, here are the key insights that made the difference between success and failure...",
@@ -170,6 +300,41 @@ export class MemStorage implements IStorage {
         comments: 47,
         shares: 23,
         isTrending: true
+      },
+      {
+        userId: 2,
+        communityId: 1,
+        title: "React 18: What's New and How to Use It",
+        content: "React 18 brings some exciting new features including concurrent rendering, automatic batching, and the new Suspense features. Let me walk you through the key changes...",
+        imageUrl: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&h=400&fit=crop",
+        tags: ["React", "JavaScript", "Frontend"],
+        likes: 203,
+        comments: 67,
+        shares: 34,
+        isTrending: true
+      },
+      {
+        userId: 3,
+        communityId: 2,
+        title: "Design Systems: Creating Consistency at Scale",
+        content: "Building a design system that works across multiple products and teams. Here's my approach to creating components that are both flexible and consistent...",
+        imageUrl: "https://images.unsplash.com/photo-1558655146-d09347e92766?w=800&h=400&fit=crop",
+        tags: ["DesignSystem", "UI", "UX"],
+        likes: 145,
+        comments: 28,
+        shares: 19,
+        isTrending: false
+      },
+      {
+        userId: 4,
+        communityId: 3,
+        title: "The Art of Pitching: Lessons from 50+ Investor Meetings",
+        content: "After raising multiple rounds of funding, I've learned what works and what doesn't when pitching to investors. Here are the key strategies that helped me succeed...",
+        tags: ["Startup", "Funding", "Pitching"],
+        likes: 98,
+        comments: 15,
+        shares: 8,
+        isTrending: false
       },
     ];
 
@@ -340,10 +505,20 @@ export class MemStorage implements IStorage {
     const post: Post = { 
       ...insertPost, 
       id, 
+      communityId: insertPost.communityId || null,
+      title: insertPost.title || null,
+      imageUrl: insertPost.imageUrl || null,
+      videoUrl: insertPost.videoUrl || null,
+      type: insertPost.type || 'text',
+      tags: insertPost.tags || null,
       likes: 0,
       comments: 0,
       shares: 0,
+      reposts: 0,
+      originalPostId: null,
+      isRepost: false,
       isTrending: false,
+      sentiment: 'neutral',
       createdAt: new Date() 
     };
     this.posts.set(id, post);
@@ -458,6 +633,181 @@ export class MemStorage implements IStorage {
     const updated = { ...r, status } as ChatRequest;
     this.chatRequests.set(id, updated);
     return updated;
+  }
+
+  // Follow/Block methods
+  async followUser(followerId: number, followingId: number): Promise<Follow> {
+    const id = this.currentFollowId++;
+    const follow: Follow = {
+      id,
+      followerId,
+      followingId,
+      createdAt: new Date()
+    };
+    this.follows.set(id, follow);
+    
+    // Update follower/following counts
+    const follower = this.users.get(followerId);
+    const following = this.users.get(followingId);
+    if (follower) {
+      this.users.set(followerId, { ...follower, followingCount: follower.followingCount + 1 });
+    }
+    if (following) {
+      this.users.set(followingId, { ...following, followersCount: following.followersCount + 1 });
+    }
+    
+    return follow;
+  }
+
+  async unfollowUser(followerId: number, followingId: number): Promise<boolean> {
+    const follow = Array.from(this.follows.values()).find(
+      f => f.followerId === followerId && f.followingId === followingId
+    );
+    if (!follow) return false;
+    
+    this.follows.delete(follow.id);
+    
+    // Update follower/following counts
+    const follower = this.users.get(followerId);
+    const following = this.users.get(followingId);
+    if (follower) {
+      this.users.set(followerId, { ...follower, followingCount: Math.max(0, follower.followingCount - 1) });
+    }
+    if (following) {
+      this.users.set(followingId, { ...following, followersCount: Math.max(0, following.followersCount - 1) });
+    }
+    
+    return true;
+  }
+
+  async blockUser(blockerId: number, blockedId: number): Promise<Block> {
+    const id = this.currentBlockId++;
+    const block: Block = {
+      id,
+      blockerId,
+      blockedId,
+      createdAt: new Date()
+    };
+    this.blocks.set(id, block);
+    
+    // If they were following each other, unfollow them
+    await this.unfollowUser(blockerId, blockedId);
+    await this.unfollowUser(blockedId, blockerId);
+    
+    return block;
+  }
+
+  async unblockUser(blockerId: number, blockedId: number): Promise<boolean> {
+    const block = Array.from(this.blocks.values()).find(
+      b => b.blockerId === blockerId && b.blockedId === blockedId
+    );
+    if (!block) return false;
+    
+    this.blocks.delete(block.id);
+    return true;
+  }
+
+  async isFollowing(followerId: number, followingId: number): Promise<boolean> {
+    return Array.from(this.follows.values()).some(
+      f => f.followerId === followerId && f.followingId === followingId
+    );
+  }
+
+  async isBlocked(blockerId: number, blockedId: number): Promise<boolean> {
+    return Array.from(this.blocks.values()).some(
+      b => b.blockerId === blockerId && b.blockedId === blockedId
+    );
+  }
+
+  async getFollowers(userId: number): Promise<User[]> {
+    const followerIds = Array.from(this.follows.values())
+      .filter(f => f.followingId === userId)
+      .map(f => f.followerId);
+    
+    return followerIds.map(id => this.users.get(id)).filter(Boolean) as User[];
+  }
+
+  async getFollowing(userId: number): Promise<User[]> {
+    const followingIds = Array.from(this.follows.values())
+      .filter(f => f.followerId === userId)
+      .map(f => f.followingId);
+    
+    return followingIds.map(id => this.users.get(id)).filter(Boolean) as User[];
+  }
+
+  async getBlockedUsers(userId: number): Promise<User[]> {
+    const blockedIds = Array.from(this.blocks.values())
+      .filter(b => b.blockerId === userId)
+      .map(b => b.blockedId);
+    
+    return blockedIds.map(id => this.users.get(id)).filter(Boolean) as User[];
+  }
+
+  // Community Membership methods
+  async joinCommunity(userId: number, communityId: number, role: 'admin' | 'maintainer' | 'member' = 'member'): Promise<CommunityMembership> {
+    const id = this.currentCommunityMembershipId++;
+    const membership: CommunityMembership = {
+      id,
+      userId,
+      communityId,
+      role,
+      joinedAt: new Date()
+    };
+    this.communityMemberships.set(id, membership);
+    
+    // Update community member count
+    const community = this.communities.get(communityId);
+    if (community) {
+      this.communities.set(communityId, { ...community, memberCount: community.memberCount + 1 });
+    }
+    
+    return membership;
+  }
+
+  async leaveCommunity(userId: number, communityId: number): Promise<boolean> {
+    const membership = Array.from(this.communityMemberships.values())
+      .find(m => m.userId === userId && m.communityId === communityId);
+    
+    if (membership) {
+      this.communityMemberships.delete(membership.id);
+      
+      // Update community member count
+      const community = this.communities.get(communityId);
+      if (community) {
+        this.communities.set(communityId, { ...community, memberCount: Math.max(0, community.memberCount - 1) });
+      }
+      
+      return true;
+    }
+    return false;
+  }
+
+  async getUserCommunities(userId: number): Promise<Community[]> {
+    const memberships = Array.from(this.communityMemberships.values())
+      .filter(m => m.userId === userId);
+    
+    return memberships.map(membership => this.communities.get(membership.communityId)!)
+      .filter(community => community !== undefined);
+  }
+
+  async getCommunityMembers(communityId: number): Promise<User[]> {
+    const memberships = Array.from(this.communityMemberships.values())
+      .filter(m => m.communityId === communityId);
+    
+    return memberships.map(membership => this.users.get(membership.userId)!)
+      .filter(user => user !== undefined);
+  }
+
+  async isCommunityMember(userId: number, communityId: number): Promise<boolean> {
+    return Array.from(this.communityMemberships.values())
+      .some(m => m.userId === userId && m.communityId === communityId);
+  }
+
+  async getUserCommunityRole(userId: number, communityId: number): Promise<'admin' | 'maintainer' | 'member' | null> {
+    const membership = Array.from(this.communityMemberships.values())
+      .find(m => m.userId === userId && m.communityId === communityId);
+    
+    return membership ? membership.role as 'admin' | 'maintainer' | 'member' : null;
   }
 }
 

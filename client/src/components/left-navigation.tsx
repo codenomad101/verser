@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageSquare, Users, Compass, User, ChevronLeft, ChevronRight, Shield } from "lucide-react";
+import { MessageSquare, Users, Compass, User, ChevronLeft, ChevronRight, Shield, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 
@@ -13,14 +13,16 @@ export default function LeftNavigation({ activeSection, onSectionChange }: LeftN
   const [, setLocation] = useLocation();
 
   const mainNavigationItems = [
-    { id: "chat", icon: MessageSquare, label: "Chat", color: "text-blue-500", notifications: 3 },
+    // { id: "chat", icon: MessageSquare, label: "Chat", color: "text-blue-500", notifications: 3 },
     { id: "communities", icon: Users, label: "Communities", color: "text-green-500", notifications: 0 },
     { id: "discovery", icon: Compass, label: "Discovery", color: "text-purple-500", notifications: 0 },
+    // { id: "verserpay", icon: CreditCard, label: "VerserPay", color: "text-purple-500", notifications: 0 },
   ];
 
   const profileItems = [
-    { id: "profile", icon: User, label: "Profile", color: "text-gray-600", notifications: 1 },
-    { id: "admin", icon: Shield, label: "Admin", color: "text-red-500", notifications: 0, isAdmin: true },
+    { id: "profile", icon: User, label: "Profile", color: "text-gray-600", notifications: 1, isRoute: true },
+    { id: "settings", icon: Settings, label: "Settings", color: "text-gray-600", notifications: 0, isRoute: true },
+    { id: "admin", icon: Shield, label: "Admin", color: "text-red-500", notifications: 0, isAdmin: true, isRoute: true },
   ];
 
   return (
@@ -90,8 +92,14 @@ export default function LeftNavigation({ activeSection, onSectionChange }: LeftN
           const isActive = activeSection === item.id;
           
           const handleClick = () => {
-            if (item.id === 'admin') {
-              setLocation('/admin');
+            if (item.isRoute) {
+              if (item.id === 'admin') {
+                setLocation('/admin');
+              } else if (item.id === 'profile') {
+                setLocation('/profile');
+              } else if (item.id === 'settings') {
+                setLocation('/settings');
+              }
             } else {
               onSectionChange(item.id);
             }

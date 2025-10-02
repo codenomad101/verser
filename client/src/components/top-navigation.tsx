@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import NotificationsSection from "@/components/notifications-section";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,18 +22,19 @@ interface TopNavigationProps {
 
 export default function TopNavigation({ activeSection, onSectionChange }: TopNavigationProps) {
   const { user, logoutMutation } = useAuth();
+  const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
   const isSuperuser = user?.role === 'superuser';
   const isAdmin = user?.role === 'admin' || isSuperuser;
 
   const navigationItems = [
-    { id: "chat", icon: MessageSquare, label: "Chat", notifications: 0 },
+    // { id: "chat", icon: MessageSquare, label: "Chat", notifications: 0 },
     { id: "communities", icon: Users, label: "Communities", notifications: 0 },
     { id: "discovery", icon: Compass, label: "Discovery", notifications: 0 },
-    { id: "verserpay", icon: CreditCard, label: "VerserPay", notifications: 0 },
-    { id: "food", icon: UtensilsCrossed, label: "Food", notifications: 0 },
-    { id: "travel", icon: Plane, label: "Travel", notifications: 0 },
+    // { id: "verserpay", icon: CreditCard, label: "VerserPay", notifications: 0 },
+    // { id: "food", icon: UtensilsCrossed, label: "Food", notifications: 0 },
+    // { id: "travel", icon: Plane, label: "Travel", notifications: 0 },
   ];
 
   const { data: searchResults } = useQuery({
@@ -183,10 +185,10 @@ export default function TopNavigation({ activeSection, onSectionChange }: TopNav
                   Role: {user?.role || 'user'}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onSectionChange('profile'); }}>Profile</DropdownMenuItem>
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onSectionChange('settings'); }}>Settings</DropdownMenuItem>
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); localStorage.setItem('foodTab','orders'); onSectionChange('food'); }}>My Orders</DropdownMenuItem>
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); localStorage.setItem('travelTab','mybookings'); onSectionChange('travel'); }}>My Bookings</DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setLocation('/profile'); }}>Profile</DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setLocation('/settings'); }}>Settings</DropdownMenuItem>
+                {/* <DropdownMenuItem onSelect={(e) => { e.preventDefault(); localStorage.setItem('foodTab','orders'); onSectionChange('food'); }}>My Orders</DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); localStorage.setItem('travelTab','mybookings'); onSectionChange('travel'); }}>My Bookings</DropdownMenuItem> */}
                 {isAdmin && (
                   <DropdownMenuItem onSelect={(e) => { e.preventDefault(); window.location.href = '/admin'; }}>Admin Dashboard</DropdownMenuItem>
                 )}

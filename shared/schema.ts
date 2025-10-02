@@ -136,6 +136,62 @@ export const postLikes = pgTable("post_likes", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Community memberships table
+export const communityMemberships = pgTable("community_memberships", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  communityId: integer("community_id").notNull(),
+  role: text("role").notNull().default("member"), // member, moderator, admin
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+});
+
+// User blocks table
+export const blocks = pgTable("blocks", {
+  id: serial("id").primaryKey(),
+  blockerId: integer("blocker_id").notNull(),
+  blockedId: integer("blocked_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Comments table
+export const comments = pgTable("comments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  postId: integer("post_id").notNull(),
+  parentCommentId: integer("parent_comment_id"), // For nested comments/replies
+  content: text("content").notNull(),
+  likesCount: integer("likes_count").notNull().default(0),
+  repliesCount: integer("replies_count").notNull().default(0),
+  isEdited: boolean("is_edited").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Comment likes table
+export const commentLikes = pgTable("comment_likes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  commentId: integer("comment_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Post shares table
+export const postShares = pgTable("post_shares", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  postId: integer("post_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Post reposts table
+export const postReposts = pgTable("post_reposts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  originalPostId: integer("original_post_id").notNull(),
+  repostContent: text("repost_content"), // Optional comment on repost
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   email: true,
@@ -202,7 +258,32 @@ export const insertPostSchema = createInsertSchema(posts).pick({
   title: true,
   content: true,
   imageUrl: true,
+  videoUrl: true,
+  type: true,
   tags: true,
+});
+
+export const insertCommentSchema = createInsertSchema(comments).pick({
+  userId: true,
+  postId: true,
+  parentCommentId: true,
+  content: true,
+});
+
+export const insertCommentLikeSchema = createInsertSchema(commentLikes).pick({
+  userId: true,
+  commentId: true,
+});
+
+export const insertPostShareSchema = createInsertSchema(postShares).pick({
+  userId: true,
+  postId: true,
+});
+
+export const insertPostRepostSchema = createInsertSchema(postReposts).pick({
+  userId: true,
+  originalPostId: true,
+  repostContent: true,
 });
 
 
@@ -233,9 +314,21 @@ export type Community = typeof communities.$inferSelect;
 export type InsertCommunity = z.infer<typeof insertCommunitySchema>;
 export type Post = typeof posts.$inferSelect;
 export type InsertPost = z.infer<typeof insertPostSchema>;
+export type Comment = typeof comments.$inferSelect;
+export type InsertComment = z.infer<typeof insertCommentSchema>;
+export type CommentLike = typeof commentLikes.$inferSelect;
+export type InsertCommentLike = z.infer<typeof insertCommentLikeSchema>;
+export type PostShare = typeof postShares.$inferSelect;
+export type InsertPostShare = z.infer<typeof insertPostShareSchema>;
+export type PostRepost = typeof postReposts.$inferSelect;
+export type InsertPostRepost = z.infer<typeof insertPostRepostSchema>;
 export type FoodOrder = typeof foodOrders.$inferSelect;
+export type CommunityMembership = typeof communityMemberships.$inferSelect;
+export type InsertCommunityMembership = typeof communityMemberships.$inferInsert;
 export type InsertFoodOrder = z.infer<typeof insertFoodOrderSchema>;
 export type TravelBooking = typeof travelBookings.$inferSelect;
 export type InsertTravelBooking = z.infer<typeof insertTravelBookingSchema>;
 export type ChatRequest = typeof chatRequests.$inferSelect;
 export type InsertChatRequest = z.infer<typeof insertChatRequestSchema>;
+export type Follow = typeof follows.$inferSelect;
+export type Block = typeof blocks.$inferSelect;

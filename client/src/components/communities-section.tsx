@@ -99,14 +99,11 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
   return (
     <div className="h-full flex flex-col">
       {/* Compact Profile Header */}
-      <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-3 flex items-center justify-between">
+      <div className="bg-gradient-to-r from-blue-800 to-blue-900 text-white p-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 bg-white/20 rounded-full flex items-center justify-center">
-            <span className="text-sm font-bold">AJ</span>
-          </div>
           <div>
-            <h3 className="font-semibold text-sm">alex_johnson</h3>
-            <p className="text-xs text-green-100">Communities</p>
+            <h3 className="font-semibold text-sm">Communities</h3>
+            <p className="text-xs text-blue-100">Connect with like-minded people</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -125,13 +122,13 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
         </div>
       </div>
 
-      <div className="flex-1 bg-gradient-to-br from-white via-green-50 to-blue-50">
+      <div className="flex-1 bg-gradient-to-br from-white via-green-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <section className="flex-1 flex h-full">
           {/* Communities List - Full screen on mobile, sidebar on desktop */}
-          <div className={`${activeCommunity ? 'hidden md:flex md:w-80' : 'flex w-full md:w-80'} border-r border-green-200 flex-col bg-white/80 backdrop-blur-sm`}>
-            <div className="p-4 border-b border-green-200">
+          <div className={`${activeCommunity ? 'hidden md:flex md:w-80' : 'flex w-full md:w-80'} border-r border-green-200 dark:border-gray-700 flex-col bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm`}>
+            <div className="p-4 border-b border-green-200 dark:border-gray-700">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold gradient-text">Communities</h2>
+                <h2 className="text-lg font-bold gradient-text dark:text-white">Communities</h2>
                 <Button 
                   size="sm" 
                   className="modern-button text-white border-0"
@@ -146,9 +143,9 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
               placeholder="Search communities..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
             />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
           </div>
         </div>
 
@@ -158,8 +155,8 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
               <div
                 key={community.id}
                 onClick={() => setActiveCommunity(community.id)}
-                className={`p-3 rounded-xl hover:bg-blue-50 cursor-pointer transition-colors ${
-                  activeCommunity === community.id ? 'border-l-4 border-blue-500 bg-blue-25' : ''
+                className={`p-3 rounded-xl hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer transition-colors ${
+                  activeCommunity === community.id ? 'border-l-4 border-blue-500 bg-blue-25 dark:bg-gray-700' : ''
                 }`}
               >
                 <div className="flex items-center space-x-3">
@@ -167,8 +164,8 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
                     {getIconComponent(community.icon)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-gray-900 truncate">{community.name}</h3>
-                    <p className="text-sm text-gray-500">
+                    <h3 className="font-medium text-gray-900 dark:text-white truncate">{community.name}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       {community.memberCount?.toLocaleString()} members • {community.onlineCount} online
                     </p>
                   </div>
@@ -183,7 +180,7 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
         <div className={`${activeCommunity ? 'flex w-full md:flex-1' : 'hidden md:flex md:flex-1'} flex-col`}>
         {activeCommunityData && (
           <>
-            <div className="p-4 border-b border-gray-100 bg-white">
+            <div className="p-4 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
               <div className="flex items-center space-x-3">
                 {/* Back button for mobile */}
                 <Button 
@@ -198,8 +195,8 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
                   {getIconComponent(activeCommunityData.icon)}
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">{activeCommunityData.name}</h3>
-                  <p className="text-sm text-gray-500">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">{activeCommunityData.name}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     {activeCommunityData.memberCount?.toLocaleString()} members • {activeCommunityData.onlineCount} online
                   </p>
                 </div>
@@ -210,9 +207,9 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
               </div>
             </div>
 
-            <ScrollArea className="flex-1 p-4 bg-gray-50">
+            <ScrollArea className="flex-1 p-4 bg-gray-50 dark:bg-gray-900">
               {/* Post Creation Area */}
-              <div className="bg-white rounded-xl p-4 shadow-sm mb-4">
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm mb-4">
                 <div className="flex items-center space-x-3 mb-3">
                   <img 
                     src={`https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?w=60&h=60&fit=crop&crop=face`}
@@ -260,7 +257,7 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
 
               <div className="space-y-4">
                 {(posts && Array.isArray(posts)) ? posts.map((post: any) => (
-                  <div key={post.id} className="bg-white rounded-xl p-4 shadow-sm hover-lift">
+                  <div key={post.id} className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover-lift">
                     <div className="flex items-start space-x-3 mb-3">
                       <img 
                         src={post.user?.avatar || `https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?w=60&h=60&fit=crop&crop=face`}
@@ -269,16 +266,16 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
                       />
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
-                          <span className="font-medium text-gray-900">{post.user?.username || 'User'}</span>
-                          <span className="text-blue-600 text-sm font-medium">@{post.user?.username || 'user'}</span>
-                          <span className="text-gray-500 text-sm">
+                          <span className="font-medium text-gray-900 dark:text-white">{post.user?.username || 'User'}</span>
+                          <span className="text-blue-600 dark:text-blue-400 text-sm font-medium">@{post.user?.username || 'user'}</span>
+                          <span className="text-gray-500 dark:text-gray-400 text-sm">
                             • {format(new Date(post.createdAt), 'h:mm a')}
                           </span>
                         </div>
                         {post.title && (
-                          <h4 className="font-semibold text-gray-900 mt-1 mb-2">{post.title}</h4>
+                          <h4 className="font-semibold text-gray-900 dark:text-white mt-1 mb-2">{post.title}</h4>
                         )}
-                        <p className="text-gray-600 mb-3">{post.content}</p>
+                        <p className="text-gray-600 dark:text-gray-300 mb-3">{post.content}</p>
                         
                         {post.imageUrl && (
                           <img 
@@ -293,7 +290,7 @@ export default function CommunitiesSection({ currentUser }: CommunitiesSectionPr
                             {post.tags.map((tag: string, index: number) => (
                               <span 
                                 key={index}
-                                className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium"
+                                className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full text-xs font-medium"
                               >
                                 #{tag}
                               </span>

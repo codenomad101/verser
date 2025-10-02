@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from "react";
+import { createContext, ReactNode, useContext, useEffect, useRef } from "react";
 import {
   useQuery,
   useMutation,
@@ -52,6 +52,7 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const logoutTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Check if user is authenticated
   const token = localStorage.getItem('auth_token');
@@ -91,6 +92,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refetchOnWindowFocus: true,
     refetchInterval: false,
   });
+
+  // Auto-logout after 10 minutes of inactivity
+  useEffect(() => {
+    const resetLogoutTimer = () => {
+      // Clear existing timer
+      if (logoutTimeoutRef.current) {
+        clearTimeout(logoutTimeoutRef.current);
+      }
+
+      // Set new timer for 10 minutes (600000 ms)
+      if (user && token) {
+        logoutTimeoutRef.current = setTimeout(() => {
+          // Auto logout
+          localStorage.removeItem('auth_token');
+          queryClient.setQueryData(["/api/auth/me"], null);
+          queryClient.clear();
+          
+          toast({
+            title: "Session Expired",
+            description: "You have been automatically logged out due to inactivity.",
+            variant: "destructive",
+          });
+          
+          // Redirect to landing page
+          window.location.href = '/';
+        }, 10 * 60 * 1000); // 10 minutes
+      }
+    };
+
+    // Reset timer on user activity
+    const handleActivity = () => {
+      if (user && token) {
+        resetLogoutTimer();
+      }
+    };
+
+    // Set initial timer
+    resetLogoutTimer();
+
+    // Add event listeners for user activity
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    events.forEach(event => {
+      document.addEventListener(event, handleActivity, true);
+    });
+
+    // Cleanup
+    return () => {
+      if (logoutTimeoutRef.current) {
+        clearTimeout(logoutTimeoutRef.current);
+      }
+      events.forEach(event => {
+        document.removeEventListener(event, handleActivity, true);
+      });
+    };
+  }, [user, token, toast]);
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
@@ -163,6 +219,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onSuccess: () => {
+      // Clear logout timer
+      if (logoutTimeoutRef.current) {
+        clearTimeout(logoutTimeoutRef.current);
+      }
+      
       localStorage.removeItem('auth_token');
       queryClient.setQueryData(["/api/auth/me"], null);
       queryClient.clear();
@@ -170,17 +231,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Logged out",
         description: "You have been logged out successfully",
       });
-      // Force redirect to auth page to avoid any stale UI state
-      window.location.href = '/auth';
+      // Force redirect to landing page
+      window.location.href = '/';
     },
     onError: (error: Error) => {
+      // Clear logout timer
+      if (logoutTimeoutRef.current) {
+        clearTimeout(logoutTimeoutRef.current);
+      }
+      
       localStorage.removeItem('auth_token');
       queryClient.clear();
       toast({
         title: "Logout completed",
         description: "You have been logged out",
       });
-      window.location.href = '/auth';
+      window.location.href = '/';
     },
   });
 

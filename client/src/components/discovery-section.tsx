@@ -77,16 +77,11 @@ export default function DiscoverySection({ currentUser }: DiscoverySectionProps)
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-3 flex items-center justify-between">
+      <div className="bg-gradient-to-r from-blue-800 to-blue-900 text-white p-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Avatar className="h-8 w-8 border-2 border-white/30">
-            <AvatarFallback className="bg-white/20 text-white text-sm font-semibold">
-              {currentUser.username.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
           <div>
-            <h3 className="font-semibold text-sm">{currentUser.username}</h3>
-            <p className="text-xs text-purple-100">Discovery</p>
+            <h3 className="font-semibold text-sm">Discovery</h3>
+            <p className="text-xs text-blue-100">Explore trending content</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -106,16 +101,16 @@ export default function DiscoverySection({ currentUser }: DiscoverySectionProps)
       </div>
 
       {/* Search and Tabs */}
-      <div className="p-4 bg-white border-b">
+      <div className="p-4 bg-white dark:bg-gray-800 border-b dark:border-gray-700">
         <div className="relative mb-4">
           <Input
             type="text"
             placeholder="Search posts, creators, hashtags..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
           />
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
         </div>
         
         <div className="flex gap-2">
@@ -151,7 +146,7 @@ export default function DiscoverySection({ currentUser }: DiscoverySectionProps)
 
       {/* Create Post Area */}
       {!isMobile && (
-        <div className="p-4 bg-white border-b">
+        <div className="p-4 bg-white dark:bg-gray-800 border-b dark:border-gray-700">
           <div className="flex items-center space-x-3 mb-3">
             <Avatar className="h-10 w-10">
               <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
@@ -160,7 +155,7 @@ export default function DiscoverySection({ currentUser }: DiscoverySectionProps)
             </Avatar>
             <Button 
               variant="outline" 
-              className="flex-1 justify-start text-gray-500"
+              className="flex-1 justify-start text-gray-500 dark:text-gray-400 dark:border-gray-600 dark:bg-gray-700"
               onClick={() => setShowNewPostDialog(true)}
             >
               Share your moment with the world...
@@ -199,10 +194,10 @@ export default function DiscoverySection({ currentUser }: DiscoverySectionProps)
       )}
 
       {/* Posts Feed */}
-      <ScrollArea className="flex-1 bg-gray-50">
+      <ScrollArea className="flex-1 bg-gray-50 dark:bg-gray-900">
         <div className="p-4 space-y-4">
           {filteredPosts.length > 0 ? filteredPosts.map((post: any) => (
-            <div key={post.id} className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div key={post.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
               {/* Post Header */}
               <div className="p-4 flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -213,7 +208,7 @@ export default function DiscoverySection({ currentUser }: DiscoverySectionProps)
                   </Avatar>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900">
+                      <span className="font-medium text-gray-900 dark:text-white">
                         {post.user?.username || 'User'}
                       </span>
                       {post.type && post.type !== "text" && (
@@ -223,7 +218,7 @@ export default function DiscoverySection({ currentUser }: DiscoverySectionProps)
                         </Badge>
                       )}
                     </div>
-                    <span className="text-gray-500 text-sm">
+                    <span className="text-gray-500 dark:text-gray-400 text-sm">
                       {format(new Date(post.createdAt), 'MMM d, h:mm a')}
                     </span>
                   </div>
@@ -236,16 +231,16 @@ export default function DiscoverySection({ currentUser }: DiscoverySectionProps)
               {/* Post Content */}
               <div className="px-4 pb-3">
                 {post.title && (
-                  <h3 className="font-semibold text-gray-900 mb-2">{post.title}</h3>
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{post.title}</h3>
                 )}
-                <p className="text-gray-700 mb-3">{post.content}</p>
+                <p className="text-gray-700 dark:text-gray-300 mb-3">{post.content}</p>
                 
                 {post.tags && post.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-3">
                     {post.tags.map((tag: string, index: number) => (
                       <span 
                         key={index}
-                        className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium cursor-pointer hover:bg-blue-200"
+                        className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full text-xs font-medium cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800"
                       >
                         #{tag}
                       </span>

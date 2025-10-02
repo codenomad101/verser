@@ -357,11 +357,17 @@ export class LocalStorage implements IStorage {
       communityId: insertPost.communityId || null,
       title: insertPost.title || null,
       imageUrl: insertPost.imageUrl || null,
+      videoUrl: insertPost.videoUrl || null,
+      type: insertPost.type || 'text',
       tags: insertPost.tags || null,
       likes: 0,
       comments: 0,
       shares: 0,
+      reposts: 0,
+      originalPostId: null,
+      isRepost: false,
       isTrending: false,
+      sentiment: 'neutral',
       createdAt: new Date() 
     };
     this.posts.set(id, post);
