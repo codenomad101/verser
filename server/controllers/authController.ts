@@ -48,16 +48,24 @@ export class AuthController {
       // Process login attempts
       const validatedData = loginSchema.parse(req.body);
       
-      // Find user by email for other accounts
-      const user = await storage.getUserByEmail(validatedData.email);
+      // Find user by email or phone
+      let user;
+      if (validatedData.email) {
+        user = await storage.getUserByEmail(validatedData.email);
+      } else if (validatedData.phone) {
+        user = await storage.getUserByPhone(validatedData.phone);
+      } else {
+        return res.status(400).json({ message: 'Email or phone is required' });
+      }
+
       if (!user) {
-        return res.status(401).json({ message: 'Invalid email or password' });
+        return res.status(401).json({ message: 'Invalid credentials' });
       }
 
       // Check password
       const isPasswordValid = await comparePassword(validatedData.password, user.password);
       if (!isPasswordValid) {
-        return res.status(401).json({ message: 'Invalid email or password' });
+        return res.status(401).json({ message: 'Invalid credentials' });
       }
 
       // Update user status and last seen

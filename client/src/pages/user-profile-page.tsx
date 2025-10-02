@@ -8,6 +8,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { UniversalHeader } from '@/components/universal-header';
+import { UniversalFooter } from '@/components/universal-footer';
 import { 
   Heart, 
   MessageCircle, 
@@ -203,39 +205,17 @@ export function UserProfilePage({ userId: propUserId }: UserProfilePageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setLocation('/')}
-              className="p-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={profileUser.avatar || ""} />
-                <AvatarFallback>
-                  {profileUser.username?.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">{profileUser.username}</h1>
-                <p className="text-sm text-gray-500">
-                  {profileUser.followersCount} followers • {profileUser.followingCount} following
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex flex-col">
+      {/* Universal Header */}
+      <UniversalHeader 
+        showBackButton={true}
+        backButtonText="Back to Home"
+        title={profileUser.username}
+        subtitle={`${profileUser.followersCount} followers • ${profileUser.followingCount} following`}
+      />
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="flex-1 max-w-4xl mx-auto px-4 py-8">
         {/* Profile Header Card */}
         <Card className="mb-6">
           <CardContent className="p-6">
@@ -751,6 +731,9 @@ export function UserProfilePage({ userId: propUserId }: UserProfilePageProps) {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Universal Footer */}
+      <UniversalFooter />
     </div>
   );
 }

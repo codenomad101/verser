@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pkg from 'pg';
 const { Pool } = pkg;
-import { eq } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import * as schema from "@shared/schema";
 import type { IStorage } from "./storage";
 import type { User, InsertUser, Conversation, InsertConversation, Message, InsertMessage, Community, InsertCommunity, Post, InsertPost } from "@shared/schema";
@@ -140,6 +140,73 @@ export class DatabaseStorage implements IStorage {
       .where(eq(schema.communities.id, id))
       .returning();
     return community || undefined;
+  }
+
+  // Community Membership methods
+  async joinCommunity(userId: number, communityId: number, role: 'admin' | 'maintainer' | 'member' = 'member'): Promise<schema.CommunityMembership> {
+    const [membership] = await db
+      .insert(schema.communityMemberships)
+      .values({
+        userId,
+        communityId,
+        role,
+        joinedAt: new Date()
+      })
+      .returning();
+    return membership;
+  }
+
+  async leaveCommunity(userId: number, communityId: number): Promise<boolean> {
+    const result = await db
+      .delete(schema.communityMemberships)
+      .where(and(eq(schema.communityMemberships.userId, userId), eq(schema.communityMemberships.communityId, communityId)));
+    return result.rowCount > 0;
+  }
+
+  async getUserCommunities(userId: number): Promise<Community[]> {
+    const memberships = await db
+      .select()
+      .from(schema.communityMemberships)
+      .where(eq(schema.communityMemberships.userId, userId));
+    
+    const communityIds = memberships.map(m => m.communityId);
+    if (communityIds.length === 0) return [];
+    
+    return await db
+      .select()
+      .from(schema.communities)
+      .where(inArray(schema.communities.id, communityIds));
+  }
+
+  async getCommunityMembers(communityId: number): Promise<User[]> {
+    const memberships = await db
+      .select()
+      .from(schema.communityMemberships)
+      .where(eq(schema.communityMemberships.communityId, communityId));
+    
+    const userIds = memberships.map(m => m.userId);
+    if (userIds.length === 0) return [];
+    
+    return await db
+      .select()
+      .from(schema.users)
+      .where(inArray(schema.users.id, userIds));
+  }
+
+  async isCommunityMember(userId: number, communityId: number): Promise<boolean> {
+    const [membership] = await db
+      .select()
+      .from(schema.communityMemberships)
+      .where(and(eq(schema.communityMemberships.userId, userId), eq(schema.communityMemberships.communityId, communityId)));
+    return !!membership;
+  }
+
+  async getUserCommunityRole(userId: number, communityId: number): Promise<'admin' | 'maintainer' | 'member' | null> {
+    const [membership] = await db
+      .select()
+      .from(schema.communityMemberships)
+      .where(and(eq(schema.communityMemberships.userId, userId), eq(schema.communityMemberships.communityId, communityId)));
+    return membership ? membership.role as 'admin' | 'maintainer' | 'member' : null;
   }
 
   async getPost(id: number): Promise<Post | undefined> {
