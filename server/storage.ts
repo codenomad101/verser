@@ -29,6 +29,7 @@ export interface IStorage {
   getAllCommunities(): Promise<Community[]>;
   createCommunity(community: InsertCommunity): Promise<Community>;
   updateCommunityStats(id: number, memberCount?: number, onlineCount?: number): Promise<Community | undefined>;
+  searchCommunities(query: string, type: string, category: string): Promise<Community[]>;
   
   // Community Memberships
   joinCommunity(userId: number, communityId: number, role?: 'admin' | 'maintainer' | 'member'): Promise<CommunityMembership>;
@@ -228,16 +229,18 @@ export class MemStorage implements IStorage {
 
     // Create sample communities
     const sampleCommunities: InsertCommunity[] = [
-      { name: "Web Developers", description: "A community for web developers to share knowledge, ask questions, and collaborate on projects", icon: "fas fa-code", color: "blue", memberCount: 2500, onlineCount: 45 },
-      { name: "UI/UX Designers", description: "Design community for sharing inspiration, tools, and best practices", icon: "fas fa-palette", color: "purple", memberCount: 1800, onlineCount: 32 },
-      { name: "Startup Founders", description: "Entrepreneurship discussions, networking, and startup advice", icon: "fas fa-rocket", color: "green", memberCount: 987, onlineCount: 18 },
-      { name: "Photography", description: "Photo sharing, tips, and techniques for photographers of all levels", icon: "fas fa-camera", color: "yellow", memberCount: 3200, onlineCount: 67 },
-      { name: "Digital Marketing", description: "Marketing strategies, tools, and case studies", icon: "fas fa-bullhorn", color: "red", memberCount: 1500, onlineCount: 28 },
-      { name: "React Developers", description: "React.js community for developers working with React ecosystem", icon: "fas fa-code", color: "blue", memberCount: 4200, onlineCount: 89 },
-      { name: "Graphic Design", description: "Creative design community for graphic designers and artists", icon: "fas fa-palette", color: "purple", memberCount: 2100, onlineCount: 45 },
-      { name: "Tech Entrepreneurs", description: "Technology entrepreneurship and innovation discussions", icon: "fas fa-rocket", color: "green", memberCount: 1200, onlineCount: 25 },
-      { name: "Mobile Photography", description: "Mobile photography tips, tricks, and photo challenges", icon: "fas fa-camera", color: "yellow", memberCount: 3800, onlineCount: 78 },
-      { name: "Content Marketing", description: "Content creation, strategy, and marketing best practices", icon: "fas fa-bullhorn", color: "red", memberCount: 1900, onlineCount: 35 },
+      { name: "Web Developers", description: "A community for web developers to share knowledge, ask questions, and collaborate on projects", icon: "fas fa-code", color: "blue", type: "public", memberCount: 2500, onlineCount: 45 },
+      { name: "UI/UX Designers", description: "Design community for sharing inspiration, tools, and best practices", icon: "fas fa-palette", color: "purple", type: "public", memberCount: 1800, onlineCount: 32 },
+      { name: "Startup Founders", description: "Entrepreneurship discussions, networking, and startup advice", icon: "fas fa-rocket", color: "green", type: "public", memberCount: 987, onlineCount: 18 },
+      { name: "Photography", description: "Photo sharing, tips, and techniques for photographers of all levels", icon: "fas fa-camera", color: "yellow", type: "public", memberCount: 3200, onlineCount: 67 },
+      { name: "Digital Marketing", description: "Marketing strategies, tools, and case studies", icon: "fas fa-bullhorn", color: "red", type: "public", memberCount: 1500, onlineCount: 28 },
+      { name: "React Developers", description: "React.js community for developers working with React ecosystem", icon: "fas fa-code", color: "blue", type: "public", memberCount: 4200, onlineCount: 89 },
+      { name: "Graphic Design", description: "Creative design community for graphic designers and artists", icon: "fas fa-palette", color: "purple", type: "public", memberCount: 2100, onlineCount: 45 },
+      { name: "Tech Entrepreneurs", description: "Technology entrepreneurship and innovation discussions", icon: "fas fa-rocket", color: "green", type: "public", memberCount: 1200, onlineCount: 25 },
+      { name: "Mobile Photography", description: "Mobile photography tips, tricks, and photo challenges", icon: "fas fa-camera", color: "yellow", type: "public", memberCount: 3800, onlineCount: 78 },
+      { name: "Content Marketing", description: "Content creation, strategy, and marketing best practices", icon: "fas fa-bullhorn", color: "red", type: "public", memberCount: 1900, onlineCount: 35 },
+      { name: "VIP Tech Leaders", description: "Exclusive community for senior tech leaders and executives", icon: "fas fa-crown", color: "gold", type: "private", memberCount: 150, onlineCount: 8 },
+      { name: "Alpha Testers", description: "Private community for beta testing new features", icon: "fas fa-flask", color: "purple", type: "private", memberCount: 75, onlineCount: 3 },
     ];
 
     sampleCommunities.forEach(community => {
@@ -461,6 +464,44 @@ export class MemStorage implements IStorage {
 
   async getAllCommunities(): Promise<Community[]> {
     return Array.from(this.communities.values());
+  }
+
+  async searchCommunities(query: string, type: string, category: string): Promise<Community[]> {
+    let communities = Array.from(this.communities.values());
+
+    // Filter by type (public/private)
+    if (type === 'public') {
+      communities = communities.filter(c => c.type === 'public');
+    } else if (type === 'private') {
+      communities = communities.filter(c => c.type === 'private');
+    }
+
+    // Filter by category
+    if (category !== 'all') {
+      communities = communities.filter(c => {
+        const categoryMap: { [key: string]: string[] } = {
+          'tech': ['Web Developers', 'React Developers', 'Tech Entrepreneurs'],
+          'design': ['UI/UX Designers', 'Graphic Design'],
+          'business': ['Startup Founders', 'Digital Marketing', 'Content Marketing'],
+          'lifestyle': ['Photography', 'Mobile Photography']
+        };
+        
+        const categoryCommunities = categoryMap[category] || [];
+        return categoryCommunities.some(name => c.name.includes(name)) || 
+               c.name.toLowerCase().includes(category.toLowerCase());
+      });
+    }
+
+    // Filter by search query
+    if (query.trim()) {
+      const searchTerm = query.toLowerCase();
+      communities = communities.filter(c => 
+        c.name.toLowerCase().includes(searchTerm) ||
+        c.description?.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    return communities;
   }
 
   async createCommunity(insertCommunity: InsertCommunity): Promise<Community> {

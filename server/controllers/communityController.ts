@@ -16,6 +16,21 @@ export class CommunityController {
     }
   }
 
+  static async searchCommunities(req: Request, res: Response) {
+    try {
+      const { q, type, category } = req.query;
+      const searchQuery = q as string || '';
+      const communityType = type as string || 'public'; // Default to public only
+      const categoryFilter = category as string || 'all';
+
+      const communities = await storage.searchCommunities(searchQuery, communityType, categoryFilter);
+      res.json(communities);
+    } catch (error) {
+      console.error('Search communities error:', error);
+      res.status(500).json({ message: 'Failed to search communities' });
+    }
+  }
+
   static async getCommunityById(req: Request, res: Response) {
     try {
       const community = await storage.getCommunity(parseInt(req.params.id));

@@ -26,6 +26,7 @@ export default function NewCommunityDialog({
   const [description, setDescription] = useState("");
   const [icon, setIcon] = useState("💻");
   const [color, setColor] = useState("#3B82F6");
+  const [type, setType] = useState("public");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -58,6 +59,7 @@ export default function NewCommunityDialog({
     setDescription("");
     setIcon("💻");
     setColor("#3B82F6");
+    setType("public");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -69,6 +71,7 @@ export default function NewCommunityDialog({
       description: description.trim(),
       icon,
       color,
+      type,
       memberCount: 1,
       onlineCount: 1,
     });
@@ -165,6 +168,29 @@ export default function NewCommunityDialog({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="type">Community Type</Label>
+            <Select value={type} onValueChange={setType}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="public">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full" />
+                    Public - Anyone can find and request to join
+                  </div>
+                </SelectItem>
+                <SelectItem value="private">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full" />
+                    Private - Only visible to members
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex justify-end gap-2 pt-4">

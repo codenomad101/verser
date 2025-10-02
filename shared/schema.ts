@@ -59,6 +59,7 @@ export const communities = pgTable("communities", {
   description: text("description"),
   icon: text("icon").notNull().default("fas fa-users"),
   color: text("color").notNull().default("blue"),
+  type: text("type").notNull().default("public"), // public, private
   memberCount: integer("member_count").notNull().default(0),
   onlineCount: integer("online_count").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -251,6 +252,7 @@ export const insertCommunitySchema = createInsertSchema(communities).pick({
   description: true,
   icon: true,
   color: true,
+  type: true,
   memberCount: true,
   onlineCount: true,
 });

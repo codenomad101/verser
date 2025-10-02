@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,7 +49,17 @@ export function CommunitiesHomePage() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showNewCommunityDialog, setShowNewCommunityDialog] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -142,9 +152,19 @@ export function CommunitiesHomePage() {
     },
   });
 
-  // Fetch communities
+  // Fetch communities with search
   const { data: communities = [], isLoading } = useQuery({
-    queryKey: ['/api/communities'],
+    queryKey: ['/api/communities/search', debouncedSearchQuery, selectedCategory],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (debouncedSearchQuery.trim()) params.append('q', debouncedSearchQuery.trim());
+      if (selectedCategory !== 'all') params.append('category', selectedCategory);
+      params.append('type', 'public'); // Only show public communities in search
+      
+      const response = await fetch(`/api/communities/search?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to search communities');
+      return response.json();
+    },
   });
 
   // Fetch user's communities
@@ -474,6 +494,9 @@ export function CommunitiesHomePage() {
                           <div className="flex items-center space-x-2">
                             <h3 className="font-semibold text-lg">{community.name}</h3>
                             {getRoleBadge(userRoles[community.id])}
+                            <Badge variant={community.type === 'public' ? 'default' : 'secondary'} className="text-xs">
+                              {community.type === 'public' ? 'Public' : 'Private'}
+                            </Badge>
                           </div>
                           <p className="text-sm text-gray-600">{community.memberCount.toLocaleString()} members</p>
                         </div>
@@ -694,6 +717,9 @@ export function CommunitiesHomePage() {
                           <div className="flex items-center space-x-2">
                             <h3 className="font-semibold text-lg">{community.name}</h3>
                             {getRoleBadge(userRoles[community.id])}
+                            <Badge variant={community.type === 'public' ? 'default' : 'secondary'} className="text-xs">
+                              {community.type === 'public' ? 'Public' : 'Private'}
+                            </Badge>
                           </div>
                           <p className="text-sm text-gray-600">{community.memberCount.toLocaleString()} members</p>
                         </div>
